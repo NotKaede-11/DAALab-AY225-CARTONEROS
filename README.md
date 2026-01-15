@@ -53,7 +53,7 @@ python --version
     - Format: One integer per line OR space/comma-separated numbers.
 2.  **Run the application**:
     ```bash
-    python RENAME.py
+    python Alg.Sorter.py
     ```
 3.  **In the App**:
     - **Select Dataset**: Choose a file from the dropdown menu (top-left).
@@ -67,7 +67,7 @@ python --version
 
 ```
 DAALab-AY225-CARTONEROS/
-├── RENAME.py          # Main application source code
+├── Alg.Sorter.py      # Main application source code
 ├── dataset.txt        # Sample dataset file
 └── README.md          # Project documentation
 ```
