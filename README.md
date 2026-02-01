@@ -37,13 +37,12 @@ This repository serves as a compilation of laboratory works and the preliminary 
 
 Navigate to the respective folders to find specific `README.md` files with instructions on how to run each project.
 
-`bash
+### Example: Running the Exam Project
 
-# Example: Running the Exam Project
-
+```bash
 cd PRELIM-EXAM/src
 python app.py
-`
+```
 
 ## 🛠️ Requirements
 
