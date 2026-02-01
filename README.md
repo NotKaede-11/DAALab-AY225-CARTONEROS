@@ -41,7 +41,7 @@ Navigate to the respective folders to find specific `README.md` files with instr
 
 ```bash
 cd PRELIM-EXAM/src
-python app.py
+python main.py
 ```
 
 ## 🛠️ Requirements
