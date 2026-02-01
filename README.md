@@ -1,88 +1,44 @@
-# Data Sorting Algorithm Visualizer 📊
+# DAA Compilation - Laboratory Activities & Projects
+**Course:** Design and Analysis of Algorithms (DAA)  
+**Student:** Cartoneros  
+**Section:** AY225
 
-A modern, minimalist Python application designed to visualize and benchmark standard sorting algorithms on large integer datasets. Built with `tkinter`, it features a clean "Latte Series" UI, real-time progress tracking, and robust dataset handling.
-
-![Python](https://img.shields.io/badge/Python-3.x-blue.svg?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)
-![Status](https://img.shields.io/badge/Status-Active-success.svg?style=flat-square)
-
----
-
-## ✨ Features
-
-- **Modern Minimalist GUI**: A soothing "Latte Theme" interface with rounded aesthetic cards, custom toggle switches, and an intuitive layout.
-- **Robust Dataset Parsing**: Intelligently reads and parses parsing `.txt` dataset files.
-  - Automatically handles newline, comma, and space-separated values.
-  - **Smart Parsing**: Detects and splits "concatenated" number errors based on statistical digit length analysis.
-- **Core Algorithms**:
-  - **Bubble Sort**: Best for educational purposes on smaller datasets.
-  - **Insertion Sort**: Efficient for small or partially sorted datasets.
-  - **Merge Sort**: A highly efficient, stable sorting algorithm for large datasets (O(n log n)).
-- **Real-Time Visualization**:
-  - Smooth progress status bar.
-  - Live sorting stats (Item count, Elapsed time).
-  - Responsive UI that doesn't freeze during processing (Multi-threaded).
-- **Control**:
-  - **Sort Order**: Toggle between Ascending and Descending order.
-  - **Cancellation**: Stop any running sort operation instantly.
+This repository serves as a compilation of laboratory works and the preliminary exam project for the DAA course.
 
 ---
 
-## 🚀 Getting Started
+## 📂 Repository Structure
 
-### Prerequisites
+### 1. [Prelim Lab Work 1: Simple Bubble Sort](PRELIM-LAB-WORK-1/)
+*   **Description:** A console-based implementation of the Bubble Sort algorithm.
+*   **Key Features:** Command-line interface, sorting benchmarking.
+*   **Algorithm:** Bubble Sort ($O(n^2)$).
 
-Ensure you have Python installed on your system. This application uses the standard library `tkinter`, which typically comes pre-installed with Python.
+### 2. [Prelim Lab Work 2: GUI Sorting Visualizer](PRELIM-LAB-WORK-2/)
+*   **Description:** A graphical user interface (Tkinter) application for visualizing and benchmarking sorting algorithms.
+*   **Key Features:** GUI, Algorithm selection, Ascending/Descending toggles.
+*   **Algorithms:** Bubble Sort, Insertion Sort, Merge Sort.
 
-```bash
-python --version
-```
-
-### Installation
-
-1.  Clone this repository or download the source code.
-2.  Navigate to the project directory:
-    ```bash
-    cd DAALab-AY225-CARTONEROS
-    ```
-
-### Usage
-
-1.  **Prepare your dataset**:
-    - Ensure your data text files (e.g., `dataset.txt`) are in the same folder as the script.
-    - Format: One integer per line OR space/comma-separated numbers.
-2.  **Run the application**:
-    ```bash
-    python Alg.Sorter.py
-    ```
-3.  **In the App**:
-    - **Select Dataset**: Choose a file from the dropdown menu (top-left).
-    - **Toggle Order**: Click "Asc" or "Desc" to set the sorting direction.
-    - **Choose Algorithm**: Click on _Bubble Sort_, _Insertion Sort_, or _Merge Sort_ to start.
-    - **View Results**: The sorted output will appear in the main text area, along with the time taken.
+### 3. [Prelim Exam: Sorting Algorithm Stress Test](PRELIM-EXAM/)
+*   **Description:** A comprehensive benchmarking tool designed to handle larger structured datasets (CSV).
+*   **Key Features:** 
+    *   Data parsing from `generated_data.csv`.
+    *   Column-based sorting (ID, FirstName, LastName).
+    *   Performance tracking (Load time vs. Sort time).
+*   **Algorithms:** Bubble Sort, Insertion Sort, Merge Sort.
 
 ---
 
-## 📂 Project Structure
+## 🚀 How to Use
 
-```
-DAALab-AY225-CARTONEROS/
-├── Alg.Sorter.py      # Main application source code
-├── dataset.txt        # Sample dataset file
-└── README.md          # Project documentation
-```
+Navigate to the respective folders to find specific `README.md` files with instructions on how to run each project.
 
-## 🛠️ Technical Details
+`ash
+# Example: Running the Exam Project
+cd PRELIM-EXAM/src
+python app.py
+` 
 
-- **Language**: Python 3
-- **GUI Framework**: Tkinter (Native)
-- **Concurrency**: `threading` module used to prevent UI blocking during heavy computations.
-- **Parsing Logic**: Uses `collections.Counter` to determine the mode of digit lengths, allowing the parser to intelligently split numbers that may have been accidentally concatenated in raw data files.
-
-## 📝 License
-
-This project is part of the **DAA-Lab** (Design and Analysis of Algorithms) coursework.
-
----
-
-_Created for DAALab AY225_
+## 🛠️ Requirements
+- Python 3.x
+- Tkinter (for Lab Work 2)
