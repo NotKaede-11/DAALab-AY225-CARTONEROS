@@ -92,18 +92,18 @@ This project contains a comprehensive benchmarking tool for sorting algorithms, 
 
 ## Benchmark Results
 
-_Sample results from testing (your results may vary based on hardware):_
+_Measured results from performance testing:_
 
-| Algorithm          | N = 1,000 | N = 10,000 | N = 100,000   |
-| ------------------ | --------- | ---------- | ------------- |
-| **Bubble Sort**    | ~0.05s    | ~5s        | ~500s+ (est.) |
-| **Insertion Sort** | ~0.03s    | ~3s        | ~300s+ (est.) |
-| **Merge Sort**     | ~0.005s   | ~0.06s     | ~0.8s         |
+| Algorithm          | N = 1,000 | N = 10,000 | N = 100,000 |
+| ------------------ | --------- | ---------- | ----------- |
+| **Bubble Sort**    | 0.4592s   | 18.7354s   | ~4,300s     |
+| **Insertion Sort** | 0.0940s   | 6.4707s    | 1,447.4907s |
+| **Merge Sort**     | 0.3013s   | 2.5987s    | 24.2101s    |
 
 ### Observations
 
-- **Bubble Sort & Insertion Sort**: Perform acceptably on small datasets (N ≤ 1,000), but execution time grows quadratically. At N = 10,000, noticeable delays occur. At N = 100,000, these algorithms become impractical.
-- **Merge Sort**: Maintains consistent O(n log n) performance across all dataset sizes. Even at N = 100,000, completes in under a second, demonstrating the importance of algorithm selection for large-scale data processing.
+- **Bubble Sort & Insertion Sort**: Perform acceptably on small datasets (N ≤ 1,000), but execution time grows quadratically. At N = 10,000, noticeable delays occur. At N = 100,000, these algorithms become highly impractical—Bubble Sort takes over an hour, and Insertion Sort requires approximately 24 minutes.
+- **Merge Sort**: Maintains consistent O(n log n) performance across all dataset sizes. Even at N = 100,000, completes in about 24 seconds, demonstrating the importance of algorithm selection for large-scale data processing.
 
 - **Stability**: All three algorithms are stable, meaning equal elements maintain their relative order after sorting—important for multi-key sorting scenarios.
 
