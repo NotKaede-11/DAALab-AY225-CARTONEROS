@@ -57,15 +57,38 @@ This project contains a comprehensive benchmarking tool for sorting algorithms, 
    ```bash
    python main.py
    ```
-3. Use the GUI to select the sorting algorithm, sort key, and dataset size.
+3. Use the GUI to:
+   - Select the sorting algorithm (Bubble, Insertion, or Merge Sort)
+   - Choose the sort key (ID, FirstName, or LastName)
+   - Enter a custom dataset size or use preset buttons (1K, 10K, 100K, All)
+   - Click **RUN BENCHMARK** to start the test
 
 ## Features
 
-- **Data Validation:** Validates CSV schema before processing.
+### Core Functionality
+
+- **Data Validation:** Validates CSV schema before processing with clear error messages.
 - **Progress Tracking:** Real-time progress bar during sorting operations.
-- **Cancellation Support:** Stop long-running sorts at any time.
-- **Data Preview:** View first 5 records before sorting.
-- **Performance Metrics:** Precise timing measurements in seconds.
+- **Cancellation Support:** Stop long-running sorts at any time with the STOP button.
+- **Data Preview:** View first 5 records before sorting to verify data structure.
+- **Performance Metrics:** Precise timing measurements displayed in real-time metric cards.
+- **Smart Warning System:** Automatically warns users when attempting O(n²) algorithms on large datasets (>10,000 records).
+
+### User Input
+
+- **Custom Dataset Size:** Type any number of records to process (e.g., 7500, 2500).
+- **Real-Time Validation:**
+  - ✓ Green border indicates valid input
+  - ✗ Red border with error message for invalid input
+  - Instant feedback showing max available records
+- **Quick Presets:** One-click buttons for common sizes (1K, 10K, 100K, All).
+- **Input Safety:** Prevents processing if input exceeds available dataset or is invalid.
+
+### Visual Feedback
+
+- **Color-Coded Validation:** Entry field changes color based on input validity.
+- **Dynamic Labels:** Shows current limits and helpful messages (e.g., "Max: 100,000", "✓ Valid (5,000 records)").
+- **Enhanced Error Messages:** Specific feedback about what went wrong and what the correct range is.
 
 ## Benchmark Results
 
