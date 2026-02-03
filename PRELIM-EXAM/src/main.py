@@ -486,8 +486,8 @@ class ExamApp(tk.Tk):
         """Estimate sorting time based on algorithm complexity and dataset size.
         
         These estimates are calibrated for typical Python performance on modern hardware.
-        Bubble Sort: ~150,000 comparisons/swaps per second (slowest, most swaps)
-        Insertion Sort: ~300,000 comparisons/shifts per second (fewer operations on average)
+        Bubble Sort: ~5,337,000 comparisons/swaps per second (slowest, most swaps)
+        Insertion Sort: ~7,726,000 comparisons/shifts per second (fewer operations on average)
         Merge Sort: ~1,500,000 operations per second (O(n log n), very efficient)
         """
         import math
@@ -495,11 +495,11 @@ class ExamApp(tk.Tk):
         if algo == "Bubble Sort":
             # O(n²) - worst case, every pair compared and many swaps
             ops = n * n
-            ops_per_sec = 150000
+            ops_per_sec = 5337000
         elif algo == "Insertion Sort":
             # O(n²) but typically faster than bubble (fewer operations on average)
             ops = (n * n) / 2  # Average case is n²/2
-            ops_per_sec = 300000
+            ops_per_sec = 7726000
         else:
             # O(n log n) algorithms - Merge Sort
             ops = n * math.log2(n) if n > 0 else 0
