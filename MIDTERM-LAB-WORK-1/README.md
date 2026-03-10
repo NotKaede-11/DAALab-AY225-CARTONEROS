@@ -177,8 +177,6 @@ Educational use only - DAA Lab Assignment
 
 ## 👥 Credits
 
-**Team**: CARTONEROS, ESCABAL, MOSOMOS
-**Lab**: DAA Lab AY225  
+**Team**: CARTONEROS, ESCABAL, MOSOMOS  
+**Subject**: DAA Lab AY225  
 **Algorithm**: Edsger W. Dijkstra (1956)
-
----
