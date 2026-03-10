@@ -177,10 +177,8 @@ Educational use only - DAA Lab Assignment
 
 ## 👥 Credits
 
-**Team**: CARTONEROS  
+**Team**: CARTONEROS, ESCABAL, MOSOMOS
 **Lab**: DAA Lab AY225  
 **Algorithm**: Edsger W. Dijkstra (1956)
 
 ---
-
-**Enjoy exploring optimal paths! 🎉**
