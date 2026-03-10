@@ -1,6 +1,6 @@
 # Multi-Metric Shortest Path Finder 🗺️
 
-An aesthetic web-based application that finds the shortest paths between all pairs of nodes in a graph using Dijkstra's algorithm, optimized for three different metrics: **Distance**, **Time**, and **Fuel**.
+An aesthetic web-based application that finds the shortest paths between all pairs of nodes in a directed graph using **Dijkstra's algorithm**, optimized for three metrics: **Distance**, **Time**, and **Fuel**. Includes an interactive **vis.js graph visualization** and a **Quick Answer** panel that identifies the best source node per metric.
 
 ![Algorithm](https://img.shields.io/badge/Algorithm-Dijkstra's-blue)
 ![Complexity](<https://img.shields.io/badge/Complexity-O((V%2BE)logV)-green>)
@@ -8,24 +8,28 @@ An aesthetic web-based application that finds the shortest paths between all pai
 
 ## 📋 Features
 
-- **Multi-Metric Optimization**: Computes shortest paths for three different metrics
+- **Multi-Metric Optimization**: Computes shortest paths for three metrics
   - 📏 Distance (shortest physical path)
   - ⏱️ Time (fastest route)
   - ⛽ Fuel (most fuel-efficient)
 
 - **All-Pairs Shortest Paths**: Calculates optimal paths from every node to every other node
 
+- **Quick Answer Panel**: Automatically determines the best source node (lowest total cost across all destinations) for each metric, with a **fuel-based tiebreaker** when totals are equal
+
+- **Interactive Graph Visualization**: Powered by vis.js — displays nodes and edges, highlights shortest paths when a source node is selected
+
 - **Interactive UI**:
-  - Filter results by source node
-  - Toggle metrics on/off
-  - Color-coded visualization for each metric
-  - Expandable path details
+  - Filter results by source node via dropdown
+  - Toggle metrics on/off with pill-shaped buttons
+  - Color-coded tables and badges for each metric
+  - Per-node metric tabs with totals
 
 - **Modern Design**:
-  - Gradient backgrounds and animations
+  - Clean flat design with a 5-color palette
   - Responsive layout (mobile-friendly)
-  - Dark theme with vibrant accents
-  - Smooth transitions and hover effects
+  - Dark plum theme with lavender and blush accents
+  - Smooth transitions, hover lifts, and fade-in animations
 
 ## 🚀 Quick Start
 
@@ -36,13 +40,14 @@ An aesthetic web-based application that finds the shortest paths between all pai
    ```
 
 2. **View Results**:
-   - The application automatically loads data from `data/data.json`
-   - Computes shortest paths for all node pairs
-   - Displays results in an organized, card-based layout
+   - The application loads graph data embedded in `js/data.js`
+   - Computes shortest paths for all node pairs on load
+   - Displays the Quick Answer summary and per-node result cards
 
 3. **Interact**:
-   - Use the node filter dropdown to focus on a specific source node
+   - Use the dropdown to filter by a specific source node
    - Click metric toggle buttons to show/hide distance, time, or fuel results
+   - View the vis.js graph — shortest paths are highlighted automatically
    - Switch between metrics using the tabs within each node card
 
 ## 📁 Project Structure
@@ -50,28 +55,24 @@ An aesthetic web-based application that finds the shortest paths between all pai
 ```
 MIDTERM-LAB-WORK-1/
 │
-├── index.html                 # Main HTML file
-├── styles.css                 # Aesthetic styling
-├── README.md                  # This file
+├── index.html          # Main HTML file
+├── styles.css          # Flat-design styling (5-color palette)
+├── README.md           # This file
 │
 ├── data/
-│   ├── dataset.xlsx          # Original Excel data
-│   └── data.json             # Converted JSON data (graph edges)
+│   └── dataset.xlsx    # Original Excel dataset
 │
-├── js/
-│   ├── graph.js              # Graph data structure & Dijkstra's algorithm
-│   └── main.js               # Application logic & UI interactions
-│
-└── convert_excel_to_json.py  # Python script for data conversion
+└── js/
+    ├── data.js         # Graph data embedded as GRAPH_DATA constant
+    ├── graph.js        # MinHeap, Graph class & Dijkstra's algorithm
+    └── main.js         # App logic, vis.js visualization & Quick Answer
 ```
 
 ## 📊 Data Format
 
-### Input (Excel/JSON)
+The graph consists of 6 nodes and 20 directed edges. Each edge has three weights:
 
-The graph data consists of edges with the following structure:
-
-| Column    | Description                 | Example |
+| Field     | Description                 | Example |
 | --------- | --------------------------- | ------- |
 | node_from | Source node identifier      | 1       |
 | node_to   | Destination node identifier | 2       |
@@ -79,75 +80,54 @@ The graph data consists of edges with the following structure:
 | time      | Travel time                 | 15      |
 | fuel      | Fuel consumption            | 1.2     |
 
-### Example JSON:
-
-```json
-[
-  {
-    "node_from": 1,
-    "node_to": 2,
-    "distance": 10,
-    "time": 15,
-    "fuel": 1.2
-  },
-  ...
-]
-```
+Data is embedded directly in `js/data.js` to avoid CORS issues when opening via `file://`.
 
 ## 🧮 Algorithm
 
 ### Dijkstra's Shortest Path Algorithm
 
-- **Time Complexity**: O((V + E) log V) with min-heap priority queue
-- **Space Complexity**: O(V) for distance array and visited set
+- **Time Complexity**: $O((V + E) \log V)$ with min-heap priority queue
+- **Space Complexity**: $O(V)$ for distance array and visited set
 
 The algorithm is executed:
 
-- 3 times per source node (once for each metric: distance, time, fuel)
-- For N nodes: **3N total Dijkstra executions**
+- 3 times per source node (once for each metric)
+- For 6 nodes: **18 total Dijkstra executions**
 
 ### Implementation Highlights
 
-1. **MinHeap Priority Queue**: Efficient O(log V) insertions and deletions
-2. **Adjacency List**: Space-efficient graph representation
-3. **Path Reconstruction**: Tracks previous nodes for full path recovery
-4. **Generic Weight Function**: Easily adaptable to different metrics
+1. **MinHeap Priority Queue** — efficient $O(\log V)$ insertions and deletions
+2. **Adjacency List** — space-efficient graph representation
+3. **Path Reconstruction** — tracks previous nodes for full path recovery
+4. **Quick Answer with Tiebreaker** — compares total costs; uses fuel as tiebreaker on ties
 
-## 🎨 Color Scheme
+## 🏆 Quick Answer Logic
 
-- **Distance**: Blue (`#3b82f6`) - Represents spatial measurement
-- **Time**: Green (`#10b981`) - Represents temporal efficiency
-- **Fuel**: Orange (`#f59e0b`) - Represents resource consumption
-- **Background**: Dark theme with gradient accents
+For each metric, the app:
 
-## 🔧 Data Conversion
+1. Computes the total cost from each source node to all reachable destinations
+2. Finds the source node with the **lowest total**
+3. If two or more nodes tie, the one with the **lowest total fuel usage** wins
 
-If you need to update the graph data:
+## 🎨 Color Palette
 
-1. **Edit the Excel file**: `data/dataset.xlsx`
-2. **Run the conversion script**:
-   ```bash
-   python convert_excel_to_json.py
-   ```
-3. **Refresh the browser** to see updated results
+| Color     | Hex       | Usage                       |
+| --------- | --------- | --------------------------- |
+| White     | `#FFFFFF` | Fuel accent, text           |
+| Deep Plum | `#412234` | Background, text on buttons |
+| Mauve     | `#6D466B` | Header, node icons          |
+| Lavender  | `#B49FCC` | Distance accent, borders    |
+| Blush     | `#EAD7D7` | Time accent, secondary text |
 
-### Requirements for Conversion:
-
-```bash
-pip install openpyxl
-```
+Flat design — no gradients anywhere.
 
 ## 📈 Statistics Displayed
 
-The application shows:
-
 - **Total Nodes**: Number of unique nodes in the graph
-- **Total Edges**: Number of connections between nodes
-- **Paths Computed**: Total shortest paths calculated (N × (N-1) × 3)
+- **Total Edges**: Number of directed connections
+- **Paths Computed**: Total shortest paths calculated ($N \times (N-1) \times 3$)
 
 ## 🌐 Browser Compatibility
-
-Tested and working on:
 
 - ✅ Google Chrome (recommended)
 - ✅ Mozilla Firefox
@@ -158,43 +138,23 @@ Tested and working on:
 
 The application adapts to different screen sizes:
 
-- **Desktop**: Full layout with side-by-side comparisons
+- **Desktop**: Full grid layout with side-by-side cards
 - **Tablet**: Stacked cards with optimized spacing
-- **Mobile**: Single-column layout with touch-friendly controls
+- **Mobile**: Single-column layout with touch-friendly pill buttons
 
 ## 🎓 Academic Context
 
 **Course**: Design and Analysis of Algorithms (DAA)  
 **Assignment**: Midterm Lab Work 1  
-**Topic**: Graph Algorithms - Shortest Path Problem  
+**Topic**: Graph Algorithms — Shortest Path Problem  
 **Year**: AY 2025
-
-## 🔍 Usage Examples
-
-### Finding the Shortest Distance Path
-
-1. Open the application
-2. Locate the source node card (e.g., "Source Node 1")
-3. Ensure the "Distance" tab is selected (blue)
-4. View the table showing all destinations with their shortest distance paths
-
-### Comparing Metrics
-
-1. Select a single source node using the filter dropdown
-2. Switch between Distance, Time, and Fuel tabs
-3. Compare how optimal paths differ based on the optimization metric
-
-### Filtering Results
-
-1. Use the "Filter by Source Node" dropdown
-2. Select a specific node to view only its paths
-3. Or keep "All Nodes" to see the complete graph analysis
 
 ## 💡 Key Insights
 
 - **Different Metrics, Different Paths**: The shortest distance path may not be the fastest or most fuel-efficient
-- **All-Pairs Analysis**: Computing paths from every node provides comprehensive graph understanding
-- **Visualization Matters**: Color-coding and interactive UI make complex data accessible
+- **Quick Answer at a Glance**: No need to scroll through all results — the best source node is highlighted immediately
+- **Tiebreaker Matters**: When two nodes have equal totals, fuel efficiency decides the winner
+- **Visualization**: The vis.js network graph makes path analysis intuitive
 
 ## 🚦 Status
 

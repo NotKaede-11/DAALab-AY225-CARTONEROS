@@ -31,6 +31,15 @@ This repository serves as a compilation of laboratory works and the preliminary 
   - Performance tracking (Load time vs. Sort time).
 - **Algorithms:** Bubble Sort, Insertion Sort, Merge Sort.
 
+### 4. [Midterm Lab Work 1: Multi-Metric Shortest Path Finder](MIDTERM-LAB-WORK-1/)
+
+- **Description:** A web-based application that finds shortest paths across all pairs of nodes using Dijkstra's algorithm, optimized for Distance, Time, and Fuel.
+- **Key Features:**
+  - Quick Answer panel (best source node per metric with fuel tiebreaker).
+  - Interactive vis.js graph visualization with path highlighting.
+  - Pill-shaped metric toggles, custom dropdown, flat 5-color dark theme.
+- **Algorithm:** Dijkstra's Shortest Path ($O((V+E) \log V)$).
+
 ---
 
 ## 🚀 How to Use
