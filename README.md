@@ -40,9 +40,14 @@ This repository serves as a compilation of laboratory works and the preliminary 
   - Pill-shaped metric toggles, custom dropdown, flat 5-color dark theme.
 - **Algorithm:** Dijkstra's Shortest Path ($O((V+E) \log V)$).
 
----
+### 5. [Midterm Lab Work 2: GUI Route Optimizer & Analyzer](MIDTERM-LAB-WORK-2/)
 
-## 🚀 How to Use
+- **Description:** A robust, interactive desktop application built in Tkinter that consolidates different lab logic implementations.
+- **Key Features:**
+  - Dynamic responsive graph view with draggable nodes.
+  - "Overall Best Hub" logic (Lab 1) vs "Point-to-Point" logic (Lab 2).
+  - Clean edge mapping with directional arrows for shortest paths.
+- **Algorithms:** Dijkstra's Shortest Path, Procedural network-generation.
 
 Navigate to the respective folders to find specific `README.md` files with instructions on how to run each project.
 
@@ -53,7 +58,16 @@ cd PRELIM-EXAM/src
 python main.py
 ```
 
+### Example: Running Midterm Lab Work 2
+
+```bash
+cd MIDTERM-LAB-WORK-2/
+python MidtermLab2-CARTONEROS.py
+```
+
 ## 🛠️ Requirements
 
 - Python 3.x
-- Tkinter (for Lab Work 2)
+- Tkinter (for GUI-based Lab Works, including Midterm Lab Work 2)
+  - _On Windows, Tkinter comes pre-installed with Python._
+  - _On Linux, you may need to install it via `sudo apt-get install python3-tk`._
