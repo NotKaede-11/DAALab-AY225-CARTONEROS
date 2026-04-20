@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fraud Pulse Atlas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./FINALS-PROJECT/sample/css/dashboard.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <div class="topbar reveal" style="--delay: 40ms">
+        <div class="tag">
+          <span class="dot"></span>Static dashboard + offline preprocessing
+        </div>
+        <div class="tag">
+          AUPRC-first interpretation for extreme class imbalance
+        </div>
+      </div>
+
+      <section class="hero reveal" style="--delay: 80ms">
+        <div class="hero-grid">
+          <div>
+            <p class="eyebrow">Finals Project</p>
+            <h1>Fraud Pulse Atlas</h1>
+            <p>
+              Transactions from European cardholders in September 2013. Fraud is
+              extremely rare, so this interface avoids raw accuracy and focuses
+              on imbalance-aware views, precision-recall behavior, and
+              side-by-side distribution comparison.
+            </p>
+          </div>
+          <div class="info-grid">
+            <div><b>Dataset source:</b> creditcard.csv</div>
+            <div><b>Visual strategy:</b> aggregated bins + sampled points</div>
+            <div><b>Frontend stack:</b> HTML, CSS, JavaScript, Chart.js</div>
+            <div><b>Data pipeline:</b> preprocess_creditcard.py</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="controls reveal" style="--delay: 120ms">
+        <label class="toggle">
+          <input type="checkbox" id="toggleLegit" checked /> Show legitimate
+          transactions
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="toggleFraud" checked /> Show fraud
+          transactions
+        </label>
+        <div class="status" id="loadStatus">
+          Waiting for processed JSON files...
+        </div>
+        <button type="button" class="toggle" id="refreshData">
+          Reload processed data
+        </button>
+        <div class="status" id="dataStamp">Data version: -</div>
+      </div>
+
+      <section class="kpis" id="kpis">
+        <article
+          class="card help-container"
+          style="--delay: 160ms"
+          data-help-title="Total Transactions"
+          data-help-text="Total number of transaction records in the dataset period. This is the base population used to compute all rates and proportions."
+        >
+          <h3>Total Transactions</h3>
+          <p class="value" id="kpiTotal">-</p>
+          <p class="hint">All records in the raw CSV</p>
+        </article>
+        <article
+          class="card help-container"
+          style="--delay: 210ms"
+          data-help-title="Fraud Cases"
+          data-help-text="Number of transactions labeled as fraud class. The percentage is fraud prevalence, meaning how common fraud is in this dataset."
+        >
+          <h3>Fraud Cases</h3>
+          <p class="value" id="kpiFraud">-</p>
+          <p class="hint" id="kpiFraudRate">-</p>
+        </article>
+        <article
+          class="card help-container"
+          style="--delay: 260ms"
+          data-help-title="Heuristic AUPRC"
+          data-help-text="AUPRC measures how well the risk score separates fraud from legitimate transactions across all cutoffs. Higher means better ranking quality on imbalanced data."
+        >
+          <h3>Heuristic AUPRC</h3>
+          <p class="value" id="kpiAuprc">-</p>
+          <p class="hint" id="kpiBaseline">-</p>
+        </article>
+        <article
+          class="card help-container"
+          style="--delay: 310ms"
+          data-help-title="Best F1 Threshold"
+          data-help-text="Risk score cutoff that gives the highest F1 on this dataset. Transactions above it are treated as predicted fraud for threshold-based evaluation."
+        >
+          <h3>Best F1 Threshold</h3>
+          <p class="value" id="kpiThreshold">-</p>
+          <p class="hint" id="kpiBestF1">-</p>
+        </article>
+      </section>
+
+      <main class="layout">
+        <section class="charts-two">
+          <article
+            class="panel help-container"
+            style="--delay: 340ms"
+            data-help-title="Class Imbalance Overview"
+            data-help-text="Compares how many records belong to legitimate versus fraud classes. It shows the dataset is highly imbalanced, with fraud as a rare class."
+          >
+            <h2>Class Imbalance Overview</h2>
+            <p class="sub">
+              Log-scale bars make the rare class visible without hiding absolute
+              volume.
+            </p>
+            <div class="canvas-wrap"><canvas id="classChart"></canvas></div>
+          </article>
+          <article
+            class="panel help-container"
+            style="--delay: 390ms"
+            data-help-title="Amount Distribution by Class"
+            data-help-text="Shows how transaction amounts are distributed for each class. It answers where fraud-labeled transactions occur across low, medium, and high amount ranges."
+          >
+            <h2>Amount Distribution by Class</h2>
+            <p class="sub">
+              Binned amounts show where fraud concentrates versus regular spend
+              behavior.
+            </p>
+            <div class="canvas-wrap"><canvas id="amountChart"></canvas></div>
+          </article>
+        </section>
+
+        <section class="charts-two">
+          <article
+            class="panel help-container"
+            style="--delay: 440ms"
+            data-help-title="Hourly Transaction Pattern"
+            data-help-text="Shows hour-of-day behavior using each class normalized to its own daily total. It represents when activity peaks for legitimate and fraud transactions."
+          >
+            <h2>Hourly Transaction Pattern</h2>
+            <p class="sub">
+              Normalized 24-hour profile compares each class as a percentage of
+              its own daily volume.
+            </p>
+            <div class="canvas-wrap"><canvas id="hourChart"></canvas></div>
+          </article>
+          <article
+            class="panel help-container"
+            style="--delay: 490ms"
+            data-help-title="Sampled Transaction Map"
+            data-help-text="Each point is a transaction with time-of-day and transformed amount. It represents where fraud records sit relative to legitimate records in the same feature space."
+          >
+            <h2>Sampled Transaction Map</h2>
+            <p class="sub">
+              All fraud points + sampled legit points plotted by hour and log
+              amount.
+            </p>
+            <div class="canvas-wrap"><canvas id="scatterChart"></canvas></div>
+          </article>
+        </section>
+
+        <section class="metrics-grid">
+          <article
+            class="panel help-container"
+            style="--delay: 540ms"
+            data-help-title="Precision-Recall Curve"
+            data-help-text="For every possible score cutoff, this shows precision and recall computed from labels. The baseline line represents precision expected from prevalence alone."
+          >
+            <h2>Precision-Recall Curve</h2>
+            <p class="sub">
+              AUPRC is the preferred metric for this dataset because class
+              prevalence is tiny.
+            </p>
+            <div class="canvas-wrap"><canvas id="prChart"></canvas></div>
+          </article>
+          <article
+            class="panel help-container"
+            style="--delay: 590ms"
+            data-help-title="Confusion Matrix and Threshold"
+            data-help-text="Counts true positives, false positives, true negatives, and false negatives for the selected cutoff. It represents the exact error mix at a given decision threshold."
+          >
+            <div class="title-row">
+              <h2>Confusion Matrix at Best F1</h2>
+            </div>
+            <p class="sub">
+              Threshold selected from heuristic score; values are for
+              interpretation, not deployment.
+            </p>
+            <div class="simulator">
+              <div class="sim-head">
+                <label for="thresholdSlider">Threshold Simulator</label>
+                <span id="thresholdInfo">Threshold: -</span>
+              </div>
+              <input
+                type="range"
+                id="thresholdSlider"
+                min="0"
+                max="0"
+                step="1"
+              />
+              <p class="sim-note">
+                Left means looser alerts, right means stricter alerts. Watch the
+                precision and recall tradeoff as you move.
+              </p>
+            </div>
+            <div class="matrix">
+              <div class="cell">
+                <span>True Positive</span><strong id="cmTp">-</strong>
+              </div>
+              <div class="cell">
+                <span>False Positive</span><strong id="cmFp">-</strong>
+              </div>
+              <div class="cell">
+                <span>True Negative</span><strong id="cmTn">-</strong>
+              </div>
+              <div class="cell">
+                <span>False Negative</span><strong id="cmFn">-</strong>
+              </div>
+            </div>
+            <ul class="metrics-list" id="rateList"></ul>
+          </article>
+        </section>
+
+        <section class="charts-two">
+          <article
+            class="panel help-container"
+            style="--delay: 620ms"
+            data-help-title="Decile Lift Chart"
+            data-help-text="Transactions are ranked by risk and split into ten equal groups. It represents how concentrated fraud is in top-ranked segments versus the overall baseline rate."
+          >
+            <div class="title-row">
+              <h2>Decile Lift Chart</h2>
+            </div>
+            <p class="sub">
+              D1 contains highest-risk transactions from the score ranking. Lift
+              compares each decile's fraud rate against baseline.
+            </p>
+            <div class="mini-legend">
+              <span class="legend-item"
+                ><span class="swatch swatch-burnt"></span>Fraud rate %</span
+              >
+              <span class="legend-item"
+                ><span class="swatch swatch-teal"></span>Cumulative fraud
+                captured %</span
+              >
+              <span class="legend-item"
+                ><span class="swatch swatch-sky"></span>Lift vs baseline</span
+              >
+            </div>
+            <div class="canvas-wrap"><canvas id="liftChart"></canvas></div>
+          </article>
+          <article
+            class="panel help-container"
+            style="--delay: 640ms"
+            data-help-title="Feature Divergence V1 to V28"
+            data-help-text="Compares class-wise means for PCA features V1 to V28. Larger absolute gaps represent features where fraud and legitimate populations differ more strongly."
+          >
+            <div class="title-row">
+              <h2>Feature Divergence (V1-V28)</h2>
+            </div>
+            <p class="sub">
+              Compare average transformed feature values between fraud and
+              legitimate classes.
+            </p>
+            <div class="feature-controls">
+              <label for="featureTopN">Show top</label>
+              <select id="featureTopN"></select>
+            </div>
+            <div class="canvas-wrap"><canvas id="featureChart"></canvas></div>
+          </article>
+        </section>
+
+        <article
+          class="insights panel help-container"
+          style="--delay: 640ms"
+          data-help-title="Narrative Insights"
+          data-help-text="Auto-generated interpretation from processed metrics and distributions. It summarizes prevalence, ranking quality, threshold outcomes, and concentration patterns in plain language."
+        >
+          <h2 style="color: #f8e6b8; margin-top: 0">Narrative Insights</h2>
+          <p id="insightText" style="margin: 8px 0 0">Loading narrative...</p>
+        </article>
+      </main>
+
+      <footer>
+        Fraud Pulse Atlas | GitHub Pages-ready static dashboard using
+        ./FINALS-PROJECT/processed/*.json
+      </footer>
+    </div>
+
+    <script src="./FINALS-PROJECT/sample/js/dashboard.js"></script>
+  </body>
+</html>
