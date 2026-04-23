@@ -1579,8 +1579,11 @@
        *  5. Signal readiness:                 onDataReady();
        */
       function loadDataset() {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 1: loadDataset() is not implemented yet.");
+        window.DS = [...RAW_DATA];
+        renderTable(window.DS);
+        renderSummaryCards(window.DS);
+        document.getElementById('rowCount').textContent = `${window.DS.length} rows`;
+        onDataReady();
       }
 
       /**
