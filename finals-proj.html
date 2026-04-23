@@ -1729,10 +1729,28 @@
        * SET innerHTML, not textContent, so the display font renders correctly.
        */
       function renderSummaryCards(data) {
-        // ↓ TODO: Implement this function ↓
-        console.warn(
-          "⚠ Student 1: renderSummaryCards() is not implemented yet.",
-        );
+        const safeData = Array.isArray(data) ? data : [];
+
+        const meanScore = safeData.length
+          ? mean(safeData.map((d) => d.score)).toFixed(1)
+          : "0.0";
+
+        const topScorer = safeData.length
+          ? safeData.reduce((best, d) => (d.score > best.score ? d : best)).name
+          : "—";
+
+        const passRate = safeData.length
+          ? `${Math.round((safeData.filter((d) => d.score >= 60).length / safeData.length) * 100)}%`
+          : "0%";
+
+        const avgHours = safeData.length
+          ? mean(safeData.map((d) => d.studyHours)).toFixed(1)
+          : "0.0";
+
+        document.getElementById("cardMeanScore").innerHTML = meanScore;
+        document.getElementById("cardTopScorer").innerHTML = topScorer;
+        document.getElementById("cardPassRate").innerHTML = passRate;
+        document.getElementById("cardAvgHours").innerHTML = avgHours;
       }
 
       /* Student 1 DOMContentLoaded entry point */
