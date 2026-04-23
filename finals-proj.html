@@ -1662,8 +1662,27 @@
        * After filtering & sorting: call renderTable(result) and update #rowCount.
        */
       function applyFilterSort() {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 1: applyFilterSort() is not implemented yet.");
+        const query = document.getElementById('filterInput').value.trim().toLowerCase();
+        const sortKey = document.getElementById('sortSelect').value;
+
+        let result = window.DS.filter((student) =>
+          student.name.toLowerCase().includes(query)
+        );
+
+        if (sortKey === 'name') {
+          result.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortKey === 'score') {
+          result.sort((a, b) => b.score - a.score);
+        } else if (sortKey === 'studyHours') {
+          result.sort((a, b) => b.studyHours - a.studyHours);
+        } else if (sortKey === 'attendance') {
+          result.sort((a, b) => b.attendance - a.attendance);
+        } else if (sortKey === 'grade') {
+          result.sort((a, b) => a.grade.localeCompare(b.grade));
+        }
+
+        renderTable(result);
+        document.getElementById('rowCount').textContent = `${result.length} rows`;
       }
 
       /**
