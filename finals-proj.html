@@ -735,7 +735,7 @@
         </p>
         <h1>Student <em>Performance</em><br />Analysis Report</h1>
         <p class="sub">
-          Dataset: 20 students · 9 variables · Academic Term 2025
+          Dataset: sampled transactions · fraud risk analysis · Term 2025
         </p>
       </div>
       <div class="masthead-right">
@@ -816,7 +816,7 @@
         <div class="section-head">
           <div class="section-head-left">
             <span class="section-num">01</span>
-            <h2>Dataset Explorer</h2>
+            <h2>Transaction Explorer</h2>
           </div>
           <span class="owner-badge badge-s1">Student 1 · Repo Owner</span>
         </div>
@@ -876,14 +876,14 @@
         <!-- Summary cards -->
         <div class="stat-strip" style="margin-bottom: 24px">
           <div class="stat-tile">
-            <div class="st-label">Mean Final Score</div>
+            <div class="st-label">Mean Risk Score</div>
             <div class="st-val" id="cardMeanScore">
               <span class="placeholder-val">—</span>
             </div>
             <div class="st-sub">out of 100</div>
           </div>
           <div class="stat-tile">
-            <div class="st-label">Top Scorer</div>
+            <div class="st-label">Highest-Risk Record</div>
             <div
               class="st-val"
               style="font-size: 1.1rem; padding-top: 6px"
@@ -891,21 +891,21 @@
             >
               <span class="placeholder-val" style="font-size: 1.4rem">—</span>
             </div>
-            <div class="st-sub">highest final score</div>
+            <div class="st-sub">maximum normalized risk score</div>
           </div>
           <div class="stat-tile">
-            <div class="st-label">Pass Rate</div>
+            <div class="st-label">High-Risk Rate</div>
             <div class="st-val" id="cardPassRate">
               <span class="placeholder-val">—</span>
             </div>
-            <div class="st-sub">score ≥ 60</div>
+            <div class="st-sub">risk score ≥ 60</div>
           </div>
           <div class="stat-tile">
-            <div class="st-label">Avg Study Hours</div>
+            <div class="st-label">Avg Amount Index</div>
             <div class="st-val" id="cardAvgHours">
               <span class="placeholder-val">—</span>
             </div>
-            <div class="st-sub">hours per week</div>
+            <div class="st-sub">derived from transaction amount</div>
           </div>
         </div>
 
@@ -915,15 +915,15 @@
             <input
               type="text"
               id="filterInput"
-              placeholder="Filter by student name…"
+              placeholder="Filter by record label…"
             />
             <select id="sortSelect">
               <option value="">Sort by…</option>
-              <option value="name">Name (A–Z)</option>
-              <option value="studyHours">Study Hours ↓</option>
-              <option value="score">Final Score ↓</option>
-              <option value="attendance">Attendance % ↓</option>
-              <option value="grade">Grade (A first)</option>
+              <option value="name">Record Label (A–Z)</option>
+              <option value="studyHours">Amount Index ↓</option>
+              <option value="score">Risk Score ↓</option>
+              <option value="attendance">Time-of-Day % ↓</option>
+              <option value="grade">Risk Band (A first)</option>
             </select>
             <button class="primary" onclick="applyFilterSort()">Apply</button>
             <button onclick="resetTable()">Reset</button>
@@ -935,15 +935,15 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Student Name</th>
-                  <th>Study Hrs/Wk</th>
-                  <th>Attendance %</th>
-                  <th>Midterm</th>
-                  <th>Final Score</th>
-                  <th>Assignments</th>
-                  <th>Sleep Hrs</th>
-                  <th>Part-time Job</th>
-                  <th>Grade</th>
+                  <th>Record Label</th>
+                  <th>Amount Index</th>
+                  <th>Time-of-Day %</th>
+                  <th>Amount Signal</th>
+                  <th>Risk Score</th>
+                  <th>Amount Bucket</th>
+                  <th>Stability Index</th>
+                  <th>Fraud Flag</th>
+                  <th>Risk Band</th>
                 </tr>
               </thead>
               <tbody id="tableBody">
@@ -958,7 +958,8 @@
                     "
                   >
                     ⏳ Waiting for Student 1 to implement
-                    <code>loadDataset()</code> and <code>renderTable()</code>
+                    <code>loadDataset()</code> and
+                    <code>renderTable()</code> for transaction data
                   </td>
                 </tr>
               </tbody>
@@ -1025,7 +1026,7 @@
         <div class="chart-row">
           <!-- Bar chart — top 10 students -->
           <div class="chart-tile">
-            <h4>Top 10 — Final Scores</h4>
+            <h4>Top 10 — Risk Scores</h4>
             <p class="chart-sub">Sorted descending · hover for detail</p>
             <div class="chart-placeholder" id="barPlaceholder">
               <span class="ico">📊</span>
@@ -1036,8 +1037,8 @@
 
           <!-- Doughnut chart — grade split -->
           <div class="chart-tile">
-            <h4>Grade Distribution</h4>
-            <p class="chart-sub">All 20 students · A / B / C / D breakdown</p>
+            <h4>Risk Band Distribution</h4>
+            <p class="chart-sub">Sampled transactions · A / B / C / D breakdown</p>
             <div class="chart-placeholder" id="doughnutPlaceholder">
               <span class="ico">🍩</span>
               Student 2: implement <code>drawDoughnut()</code>
@@ -1048,9 +1049,9 @@
 
         <!-- Scatter plot — full width -->
         <div class="chart-tile chart-single">
-          <h4>Attendance % vs Final Score</h4>
+          <h4>Time-of-Day % vs Risk Score</h4>
           <p class="chart-sub">
-            Each point = one student · includes regression line overlay
+            Each point = one transaction · includes regression line overlay
           </p>
           <div
             class="chart-placeholder"
@@ -1161,7 +1162,7 @@
             <h4>Correlation Analysis</h4>
             <ul class="kv-list">
               <li>
-                <span class="k">Pearson r (hours→score)</span>
+                <span class="k">Pearson r (amountIndex→riskScore)</span>
                 <span class="v" id="rPearson">—</span>
               </li>
               <li>
@@ -1169,7 +1170,7 @@
                 <span class="v" id="rInterp">—</span>
               </li>
               <li>
-                <span class="k">Pearson r (attend→score)</span>
+                <span class="k">Pearson r (timeOfDay→riskScore)</span>
                 <span class="v" id="rPearson2">—</span>
               </li>
               <li>
@@ -1212,7 +1213,7 @@
                 <span class="v" id="regInterp">—</span>
               </li>
               <li>
-                <span class="k">Predicted @15 hrs</span
+                <span class="k">Predicted @index 15</span
                 ><span class="v" id="regPredict">—</span>
               </li>
             </ul>
@@ -1554,6 +1555,97 @@
           : s[m];
       }
 
+      const PROCESSED_POINTS_PATH = "FINALS-PROJECT/processed/sample_points.json";
+
+      function clampNumber(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function safeNumber(value, fallback = 0) {
+        const num = Number(value);
+        return Number.isFinite(num) ? num : fallback;
+      }
+
+      function scaleRange(value, inMin, inMax, outMin, outMax) {
+        if (inMax === inMin) return outMin;
+        const ratio = (value - inMin) / (inMax - inMin);
+        return outMin + ratio * (outMax - outMin);
+      }
+
+      function gradeFromScore(score) {
+        if (score >= 85) return "A";
+        if (score >= 70) return "B";
+        if (score >= 55) return "C";
+        return "D";
+      }
+
+      function mapProcessedPoints(points) {
+        if (!Array.isArray(points) || points.length === 0) {
+          return [];
+        }
+
+        const amountLogs = points.map((p) => safeNumber(p.amount_log10));
+        const scoreHints = points.map((p) => safeNumber(p.score_hint));
+        const amounts = points.map((p) => safeNumber(p.amount));
+
+        const amountLogMin = Math.min(...amountLogs);
+        const amountLogMax = Math.max(...amountLogs);
+        const scoreHintMin = Math.min(...scoreHints);
+        const scoreHintMax = Math.max(...scoreHints);
+        const amountMin = Math.min(...amounts);
+        const amountMax = Math.max(...amounts);
+
+        return points.map((point, index) => {
+          const amountLogValue = safeNumber(point.amount_log10, amountLogMin);
+          const scoreHintValue = safeNumber(point.score_hint, scoreHintMin);
+          const amountValue = safeNumber(point.amount, amountMin);
+          const hourValue = safeNumber(point.time_hour, 0);
+
+          const score = Math.round(
+            clampNumber(
+              scaleRange(scoreHintValue, scoreHintMin, scoreHintMax, 0, 100),
+              0,
+              100,
+            ),
+          );
+          const midterm = Math.round(
+            clampNumber(
+              scaleRange(amountLogValue, amountLogMin, amountLogMax, 0, 100),
+              0,
+              100,
+            ),
+          );
+          const studyHours = Math.round(
+            clampNumber(
+              scaleRange(amountLogValue, amountLogMin, amountLogMax, 0, 24),
+              0,
+              24,
+            ),
+          );
+          const hourOfDay = ((hourValue % 24) + 24) % 24;
+          const attendance = Math.round(clampNumber((hourOfDay / 24) * 100, 0, 100));
+          const assignments = Math.round(
+            clampNumber(scaleRange(amountValue, amountMin, amountMax, 0, 10), 0, 10),
+          );
+          const sleep = Math.round(clampNumber(4 + score / 20, 4, 9));
+          const job = safeNumber(point.class, 0) === 1;
+          const grade = gradeFromScore(score);
+          const name = `${job ? "Fraud" : "Legit"} TX ${index + 1}`;
+
+          return {
+            name,
+            studyHours,
+            attendance,
+            midterm,
+            score,
+            assignments,
+            sleep,
+            job,
+            grade,
+          };
+        });
+      }
+
       /* ═══════════════════════════════════════════════════════════════════
    ███████╗ ████████╗ ██╗   ██╗ ██████╗  ███████╗ ███╗  ██╗ ████████╗ ██╗
    ██╔════╝    ██╔══╝ ██║   ██║ ██╔══██╗ ██╔════╝ ████╗ ██║    ██╔══╝ ██║
@@ -1578,11 +1670,36 @@
        *  4. Update row count badge:           document.getElementById('rowCount').textContent = ...
        *  5. Signal readiness:                 onDataReady();
        */
-      function loadDataset() {
+      async function loadDataset() {
         window.DS = [...RAW_DATA];
+
+        try {
+          const response = await fetch(PROCESSED_POINTS_PATH, { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const payload = await response.json();
+          const mappedRows = mapProcessedPoints(payload.points);
+
+          if (mappedRows.length > 0) {
+            window.DS = mappedRows;
+          } else {
+            console.warn(
+              "Processed dataset loaded but contained no points. Using RAW_DATA fallback.",
+            );
+          }
+        } catch (error) {
+          console.warn(
+            "Could not load processed finals dataset; using RAW_DATA fallback.",
+            error,
+          );
+        }
+
         renderTable(window.DS);
         renderSummaryCards(window.DS);
-        document.getElementById('rowCount').textContent = `${window.DS.length} rows`;
+        document.getElementById("rowCount").textContent =
+          `${window.DS.length} rows`;
         onDataReady();
       }
 
@@ -1606,24 +1723,25 @@
        *   <tr><td colspan="10" style="text-align:center;padding:30px;">No results found.</td></tr>
        */
       function renderTable(data) {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
 
         if (!Array.isArray(data) || data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;">No results found.</td></tr>';
+          tbody.innerHTML =
+            '<tr><td colspan="10" style="text-align:center;padding:30px;">No results found.</td></tr>';
           return;
         }
 
         data.forEach((student, index) => {
-          const row = document.createElement('tr');
+          const row = document.createElement("tr");
 
           const gradeClassMap = {
-            A: 'gA',
-            B: 'gB',
-            C: 'gC',
-            D: 'gD'
+            A: "gA",
+            B: "gB",
+            C: "gC",
+            D: "gD",
           };
-          const gradeClass = gradeClassMap[student.grade] || '';
+          const gradeClass = gradeClassMap[student.grade] || "";
 
           row.innerHTML = `
             <td>${index + 1}</td>
@@ -1634,7 +1752,7 @@
             <td class="num">${student.score}</td>
             <td class="num">${student.assignments}</td>
             <td class="num">${student.sleep}</td>
-            <td>${student.job ? 'Yes' : 'No'}</td>
+            <td>${student.job ? "Yes" : "No"}</td>
             <td class="${gradeClass}">${student.grade}</td>
           `;
 
@@ -1662,28 +1780,32 @@
        * After filtering & sorting: call renderTable(result) and update #rowCount.
        */
       function applyFilterSort() {
-        const query = document.getElementById('filterInput').value.trim().toLowerCase();
-        const sortKey = document.getElementById('sortSelect').value;
+        const query = document
+          .getElementById("filterInput")
+          .value.trim()
+          .toLowerCase();
+        const sortKey = document.getElementById("sortSelect").value;
 
         let result = window.DS.filter((student) =>
-          student.name.toLowerCase().includes(query)
+          student.name.toLowerCase().includes(query),
         );
 
-        if (sortKey === 'name') {
+        if (sortKey === "name") {
           result.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortKey === 'score') {
+        } else if (sortKey === "score") {
           result.sort((a, b) => b.score - a.score);
-        } else if (sortKey === 'studyHours') {
+        } else if (sortKey === "studyHours") {
           result.sort((a, b) => b.studyHours - a.studyHours);
-        } else if (sortKey === 'attendance') {
+        } else if (sortKey === "attendance") {
           result.sort((a, b) => b.attendance - a.attendance);
-        } else if (sortKey === 'grade') {
+        } else if (sortKey === "grade") {
           result.sort((a, b) => a.grade.localeCompare(b.grade));
         }
 
         renderTable(result);
         renderSummaryCards(result);
-        document.getElementById('rowCount').textContent = `${result.length} rows`;
+        document.getElementById("rowCount").textContent =
+          `${result.length} rows`;
       }
 
       /**
@@ -1698,11 +1820,12 @@
        *  4. Update #rowCount with window.DS.length
        */
       function resetTable() {
-        document.getElementById('filterInput').value = '';
-        document.getElementById('sortSelect').value = '';
+        document.getElementById("filterInput").value = "";
+        document.getElementById("sortSelect").value = "";
         renderTable(window.DS);
         renderSummaryCards(window.DS);
-        document.getElementById('rowCount').textContent = `${window.DS.length} rows`;
+        document.getElementById("rowCount").textContent =
+          `${window.DS.length} rows`;
       }
 
       /**
