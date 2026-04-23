@@ -1697,8 +1697,10 @@
        *  4. Update #rowCount with window.DS.length
        */
       function resetTable() {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 1: resetTable() is not implemented yet.");
+        document.getElementById('filterInput').value = '';
+        document.getElementById('sortSelect').value = '';
+        renderTable(window.DS);
+        document.getElementById('rowCount').textContent = `${window.DS.length} rows`;
       }
 
       /**
