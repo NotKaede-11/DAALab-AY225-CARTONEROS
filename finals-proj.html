@@ -1682,6 +1682,7 @@
         }
 
         renderTable(result);
+        renderSummaryCards(result);
         document.getElementById('rowCount').textContent = `${result.length} rows`;
       }
 
@@ -1700,6 +1701,7 @@
         document.getElementById('filterInput').value = '';
         document.getElementById('sortSelect').value = '';
         renderTable(window.DS);
+        renderSummaryCards(window.DS);
         document.getElementById('rowCount').textContent = `${window.DS.length} rows`;
       }
 
