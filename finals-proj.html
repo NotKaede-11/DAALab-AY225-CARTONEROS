@@ -1606,11 +1606,40 @@
        *   <tr><td colspan="10" style="text-align:center;padding:30px;">No results found.</td></tr>
        */
       function renderTable(data) {
-        // ↓ TODO: Implement this function ↓
-        // Hint: const tbody = document.getElementById('tableBody');
-        // Hint: tbody.innerHTML = '';
-        // Hint: data.forEach((student, i) => { ... tbody.appendChild(tr); });
-        console.warn("⚠ Student 1: renderTable() is not implemented yet.");
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        if (!Array.isArray(data) || data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;">No results found.</td></tr>';
+          return;
+        }
+
+        data.forEach((student, index) => {
+          const row = document.createElement('tr');
+
+          const gradeClassMap = {
+            A: 'gA',
+            B: 'gB',
+            C: 'gC',
+            D: 'gD'
+          };
+          const gradeClass = gradeClassMap[student.grade] || '';
+
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${student.name}</td>
+            <td class="num">${student.studyHours}</td>
+            <td class="num">${student.attendance}</td>
+            <td class="num">${student.midterm}</td>
+            <td class="num">${student.score}</td>
+            <td class="num">${student.assignments}</td>
+            <td class="num">${student.sleep}</td>
+            <td>${student.job ? 'Yes' : 'No'}</td>
+            <td class="${gradeClass}">${student.grade}</td>
+          `;
+
+          tbody.appendChild(row);
+        });
       }
 
       /**
