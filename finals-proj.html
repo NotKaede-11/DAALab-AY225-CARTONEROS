@@ -927,7 +927,7 @@
             </select>
             <button class="primary" onclick="applyFilterSort()">Apply</button>
             <button onclick="resetTable()">Reset</button>
-            <span class="row-count" id="rowCount">— rows</span>
+            <span class="row-count" id="rowCount">— records</span>
           </div>
 
           <div class="table-scroll">
@@ -1572,6 +1572,27 @@
         return outMin + ratio * (outMax - outMin);
       }
 
+      function percentileFromSorted(sortedValues, percentile) {
+        if (!Array.isArray(sortedValues) || sortedValues.length === 0) return 0;
+        const p = clampNumber(percentile, 0, 1);
+        const index = (sortedValues.length - 1) * p;
+        const low = Math.floor(index);
+        const high = Math.ceil(index);
+        if (low === high) return sortedValues[low];
+        const weight = index - low;
+        return sortedValues[low] * (1 - weight) + sortedValues[high] * weight;
+      }
+
+      function robustScale(value, sortedValues, outMin, outMax) {
+        const lowRef = percentileFromSorted(sortedValues, 0.05);
+        const highRef = percentileFromSorted(sortedValues, 0.95);
+        return clampNumber(
+          scaleRange(value, lowRef, highRef, outMin, outMax),
+          outMin,
+          outMax,
+        );
+      }
+
       function gradeFromScore(score) {
         if (score >= 85) return "A";
         if (score >= 70) return "B";
@@ -1586,51 +1607,40 @@
 
         const amountLogs = points.map((p) => safeNumber(p.amount_log10));
         const scoreHints = points.map((p) => safeNumber(p.score_hint));
-        const amounts = points.map((p) => safeNumber(p.amount));
-
-        const amountLogMin = Math.min(...amountLogs);
-        const amountLogMax = Math.max(...amountLogs);
-        const scoreHintMin = Math.min(...scoreHints);
-        const scoreHintMax = Math.max(...scoreHints);
-        const amountMin = Math.min(...amounts);
-        const amountMax = Math.max(...amounts);
+        const sortedAmountLogs = [...amountLogs].sort((a, b) => a - b);
+        const sortedScoreHints = [...scoreHints].sort((a, b) => a - b);
 
         return points.map((point, index) => {
-          const amountLogValue = safeNumber(point.amount_log10, amountLogMin);
-          const scoreHintValue = safeNumber(point.score_hint, scoreHintMin);
-          const amountValue = safeNumber(point.amount, amountMin);
-          const hourValue = safeNumber(point.time_hour, 0);
-
-          const score = Math.round(
-            clampNumber(
-              scaleRange(scoreHintValue, scoreHintMin, scoreHintMax, 0, 100),
-              0,
-              100,
-            ),
+          const amountLogValue = safeNumber(
+            point.amount_log10,
+            percentileFromSorted(sortedAmountLogs, 0.5),
           );
+          const scoreHintValue = safeNumber(
+            point.score_hint,
+            percentileFromSorted(sortedScoreHints, 0.5),
+          );
+          const hourValue = safeNumber(point.time_hour, 0);
+          const isFraud = safeNumber(point.class, 0) === 1;
+
+          const baseScore = Math.round(
+            robustScale(scoreHintValue, sortedScoreHints, 0, 100),
+          );
+          const score = clampNumber(baseScore + (isFraud ? 8 : 0), 0, 100);
           const midterm = Math.round(
-            clampNumber(
-              scaleRange(amountLogValue, amountLogMin, amountLogMax, 0, 100),
-              0,
-              100,
-            ),
+            robustScale(amountLogValue, sortedAmountLogs, 0, 100),
           );
           const studyHours = Math.round(
-            clampNumber(
-              scaleRange(amountLogValue, amountLogMin, amountLogMax, 0, 24),
-              0,
-              24,
-            ),
+            robustScale(amountLogValue, sortedAmountLogs, 0, 24),
           );
           const hourOfDay = ((hourValue % 24) + 24) % 24;
           const attendance = Math.round(clampNumber((hourOfDay / 24) * 100, 0, 100));
           const assignments = Math.round(
-            clampNumber(scaleRange(amountValue, amountMin, amountMax, 0, 10), 0, 10),
+            robustScale(amountLogValue, sortedAmountLogs, 0, 10),
           );
-          const sleep = Math.round(clampNumber(4 + score / 20, 4, 9));
-          const job = safeNumber(point.class, 0) === 1;
+          const sleep = Math.round(clampNumber(9 - score / 20, 4, 9));
+          const job = isFraud;
           const grade = gradeFromScore(score);
-          const name = `${job ? "Fraud" : "Legit"} TX ${index + 1}`;
+          const name = `${job ? "Fraud" : "Legit"} TX-${String(index + 1).padStart(5, "0")}`;
 
           return {
             name,
@@ -1699,7 +1709,7 @@
         renderTable(window.DS);
         renderSummaryCards(window.DS);
         document.getElementById("rowCount").textContent =
-          `${window.DS.length} rows`;
+          `${window.DS.length} records`;
         onDataReady();
       }
 
@@ -1728,7 +1738,7 @@
 
         if (!Array.isArray(data) || data.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="10" style="text-align:center;padding:30px;">No results found.</td></tr>';
+            '<tr><td colspan="10" style="text-align:center;padding:30px;">No transaction records found.</td></tr>';
           return;
         }
 
@@ -1805,7 +1815,7 @@
         renderTable(result);
         renderSummaryCards(result);
         document.getElementById("rowCount").textContent =
-          `${result.length} rows`;
+          `${result.length} records`;
       }
 
       /**
@@ -1825,7 +1835,7 @@
         renderTable(window.DS);
         renderSummaryCards(window.DS);
         document.getElementById("rowCount").textContent =
-          `${window.DS.length} rows`;
+          `${window.DS.length} records`;
       }
 
       /**
