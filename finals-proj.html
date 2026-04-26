@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DataSci Collab · 2-Student Git Activity</title>
+    <title>Fraud Risk Analysis · 2-Student Git Activity</title>
 
     <!--
   ╔══════════════════════════════════════════════════════════════════════════╗
@@ -733,8 +733,10 @@
         <p class="overline">
           Computer Science · Data Science Track · Git Collaborative Activity
         </p>
-        <h1>Student <em>Performance</em><br />Analysis Report</h1>
-        <p class="sub">Dataset: 20 students · 9 variables · Academic Term 2025</p>
+        <h1>Transaction <em>Risk</em><br />Analysis Report</h1>
+        <p class="sub">
+          Dataset: processed transactions · credit card fraud · 284,807 rows
+        </p>
       </div>
       <div class="masthead-right">
         <div class="branch-pill">
@@ -814,7 +816,7 @@
         <div class="section-head">
           <div class="section-head-left">
             <span class="section-num">01</span>
-            <h2>Dataset Explorer</h2>
+            <h2>Transaction Explorer</h2>
           </div>
           <span class="owner-badge badge-s1">Student 1 · Repo Owner</span>
         </div>
@@ -874,14 +876,14 @@
         <!-- Summary cards -->
         <div class="stat-strip" style="margin-bottom: 24px">
           <div class="stat-tile">
-            <div class="st-label">Mean Final Score</div>
+            <div class="st-label">Mean Risk Score</div>
             <div class="st-val" id="cardMeanScore">
               <span class="placeholder-val">—</span>
             </div>
             <div class="st-sub">out of 100</div>
           </div>
           <div class="stat-tile">
-            <div class="st-label">Top Scorer</div>
+            <div class="st-label">Highest-Risk Record</div>
             <div
               class="st-val"
               style="font-size: 1.1rem; padding-top: 6px"
@@ -889,21 +891,21 @@
             >
               <span class="placeholder-val" style="font-size: 1.4rem">—</span>
             </div>
-            <div class="st-sub">highest final score</div>
+            <div class="st-sub">maximum normalized risk score</div>
           </div>
           <div class="stat-tile">
-            <div class="st-label">Pass Rate</div>
+            <div class="st-label">High-Risk Rate</div>
             <div class="st-val" id="cardPassRate">
               <span class="placeholder-val">—</span>
             </div>
-            <div class="st-sub">score ≥ 60</div>
+            <div class="st-sub">risk score ≥ 60</div>
           </div>
           <div class="stat-tile">
-            <div class="st-label">Avg Study Hours</div>
+            <div class="st-label">Avg Amount Index</div>
             <div class="st-val" id="cardAvgHours">
               <span class="placeholder-val">—</span>
             </div>
-            <div class="st-sub">hours per week</div>
+            <div class="st-sub">derived from transaction amount</div>
           </div>
         </div>
 
@@ -913,19 +915,19 @@
             <input
               type="text"
               id="filterInput"
-              placeholder="Filter by student name…"
+              placeholder="Filter by record label…"
             />
             <select id="sortSelect">
               <option value="">Sort by…</option>
-              <option value="name">Name (A–Z)</option>
-              <option value="studyHours">Study Hours ↓</option>
-              <option value="score">Final Score ↓</option>
-              <option value="attendance">Attendance % ↓</option>
-              <option value="grade">Grade (A first)</option>
+              <option value="name">Record Label (A–Z)</option>
+              <option value="studyHours">Amount Index ↓</option>
+              <option value="score">Risk Score ↓</option>
+              <option value="attendance">Time-of-Day % ↓</option>
+              <option value="grade">Risk Band (A first)</option>
             </select>
             <button class="primary" onclick="applyFilterSort()">Apply</button>
             <button onclick="resetTable()">Reset</button>
-            <span class="row-count" id="rowCount">— rows</span>
+            <span class="row-count" id="rowCount">— records</span>
           </div>
 
           <div class="table-scroll">
@@ -933,15 +935,15 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Student Name</th>
-                  <th>Study Hrs/Wk</th>
-                  <th>Attendance %</th>
-                  <th>Midterm</th>
-                  <th>Final Score</th>
-                  <th>Assignments</th>
-                  <th>Sleep Hrs</th>
-                  <th>Part-time Job</th>
-                  <th>Grade</th>
+                  <th>Record Label</th>
+                  <th>Amount Index</th>
+                  <th>Time-of-Day %</th>
+                  <th>Amount Signal</th>
+                  <th>Risk Score</th>
+                  <th>Amount Bucket</th>
+                  <th>Stability Index</th>
+                  <th>Fraud Flag</th>
+                  <th>Risk Band</th>
                 </tr>
               </thead>
               <tbody id="tableBody">
@@ -956,11 +958,36 @@
                     "
                   >
                     ⏳ Waiting for Student 1 to implement
-                    <code>loadDataset()</code> and <code>renderTable()</code>
+                    <code>loadDataset()</code> and
+                    <code>renderTable()</code> for transaction data
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+              margin-top: 14px;
+              flex-wrap: wrap;
+            "
+          >
+            <span
+              id="pageInfo"
+              style="
+                font-size: 0.72rem;
+                color: var(--text-dim);
+                font-family: var(--mono);
+              "
+              >Showing —</span
+            >
+            <div style="display: flex; gap: 10px">
+              <button id="prevPageBtn" onclick="goToPage(-1)">Previous</button>
+              <button id="nextPageBtn" onclick="goToPage(1)">Next</button>
+            </div>
           </div>
         </div>
         <!-- /panel -->
@@ -1023,7 +1050,7 @@
         <div class="chart-row">
           <!-- Bar chart — top 10 students -->
           <div class="chart-tile">
-            <h4>Top 10 — Final Scores</h4>
+            <h4>Top 10 — Risk Scores</h4>
             <p class="chart-sub">Sorted descending · hover for detail</p>
             <div class="chart-placeholder" id="barPlaceholder">
               <span class="ico">📊</span>
@@ -1034,8 +1061,10 @@
 
           <!-- Doughnut chart — grade split -->
           <div class="chart-tile">
-            <h4>Grade Distribution</h4>
-            <p class="chart-sub">All 20 students · A / B / C / D breakdown</p>
+            <h4>Risk Band Distribution</h4>
+            <p class="chart-sub">
+              Processed transactions · A / B / C / D breakdown
+            </p>
             <div class="chart-placeholder" id="doughnutPlaceholder">
               <span class="ico">🍩</span>
               Student 2: implement <code>drawDoughnut()</code>
@@ -1046,9 +1075,9 @@
 
         <!-- Scatter plot — full width -->
         <div class="chart-tile chart-single">
-          <h4>Attendance % vs Final Score</h4>
+          <h4>Time-of-Day % vs Risk Score</h4>
           <p class="chart-sub">
-            Each point = one student · includes regression line overlay
+            Each point = one transaction · includes regression line overlay
           </p>
           <div
             class="chart-placeholder"
@@ -1128,15 +1157,15 @@
             <h4>Descriptive Statistics</h4>
             <ul class="kv-list">
               <li>
-                <span class="k">n (sample size)</span>
+                <span class="k">n (dataset size)</span>
                 <span class="v" id="an">—</span>
               </li>
               <li>
-                <span class="k">Min score</span>
+                <span class="k">Min risk score</span>
                 <span class="v" id="aMin">—</span>
               </li>
               <li>
-                <span class="k">Max score</span>
+                <span class="k">Max risk score</span>
                 <span class="v" id="aMax">—</span>
               </li>
               <li>
@@ -1159,7 +1188,7 @@
             <h4>Correlation Analysis</h4>
             <ul class="kv-list">
               <li>
-                <span class="k">Pearson r (hours→score)</span>
+                <span class="k">Pearson r (amountIndex→riskScore)</span>
                 <span class="v" id="rPearson">—</span>
               </li>
               <li>
@@ -1167,7 +1196,7 @@
                 <span class="v" id="rInterp">—</span>
               </li>
               <li>
-                <span class="k">Pearson r (attend→score)</span>
+                <span class="k">Pearson r (timeOfDay→riskScore)</span>
                 <span class="v" id="rPearson2">—</span>
               </li>
               <li>
@@ -1210,7 +1239,7 @@
                 <span class="v" id="regInterp">—</span>
               </li>
               <li>
-                <span class="k">Predicted @15 hrs</span
+                <span class="k">Predicted @index 15</span
                 ><span class="v" id="regPredict">—</span>
               </li>
             </ul>
@@ -1552,6 +1581,159 @@
           : s[m];
       }
 
+      const PROCESSED_POINTS_PATH =
+        "FINALS-PROJECT/processed/sample_points.json";
+
+      function clampNumber(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function safeNumber(value, fallback = 0) {
+        const num = Number(value);
+        return Number.isFinite(num) ? num : fallback;
+      }
+
+      function scaleRange(value, inMin, inMax, outMin, outMax) {
+        if (inMax === inMin) return outMin;
+        const ratio = (value - inMin) / (inMax - inMin);
+        return outMin + ratio * (outMax - outMin);
+      }
+
+      function percentileFromSorted(sortedValues, percentile) {
+        if (!Array.isArray(sortedValues) || sortedValues.length === 0) return 0;
+        const p = clampNumber(percentile, 0, 1);
+        const index = (sortedValues.length - 1) * p;
+        const low = Math.floor(index);
+        const high = Math.ceil(index);
+        if (low === high) return sortedValues[low];
+        const weight = index - low;
+        return sortedValues[low] * (1 - weight) + sortedValues[high] * weight;
+      }
+
+      function robustScale(value, sortedValues, outMin, outMax) {
+        const lowRef = percentileFromSorted(sortedValues, 0.05);
+        const highRef = percentileFromSorted(sortedValues, 0.95);
+        return clampNumber(
+          scaleRange(value, lowRef, highRef, outMin, outMax),
+          outMin,
+          outMax,
+        );
+      }
+
+      function gradeFromScore(score) {
+        if (score >= 85) return "A";
+        if (score >= 70) return "B";
+        if (score >= 55) return "C";
+        return "D";
+      }
+
+      function mapProcessedPoints(points) {
+        if (!Array.isArray(points) || points.length === 0) {
+          return [];
+        }
+
+        const amountLogs = points.map((p) => safeNumber(p.amount_log10));
+        const scoreHints = points.map((p) => safeNumber(p.score_hint));
+        const sortedAmountLogs = [...amountLogs].sort((a, b) => a - b);
+        const sortedScoreHints = [...scoreHints].sort((a, b) => a - b);
+
+        return points.map((point, index) => {
+          const amountLogValue = safeNumber(
+            point.amount_log10,
+            percentileFromSorted(sortedAmountLogs, 0.5),
+          );
+          const scoreHintValue = safeNumber(
+            point.score_hint,
+            percentileFromSorted(sortedScoreHints, 0.5),
+          );
+          const hourValue = safeNumber(point.time_hour, 0);
+          const isFraud = safeNumber(point.class, 0) === 1;
+
+          const baseScore = Math.round(
+            robustScale(scoreHintValue, sortedScoreHints, 0, 100),
+          );
+          const score = clampNumber(baseScore + (isFraud ? 8 : 0), 0, 100);
+          const midterm = Math.round(
+            robustScale(amountLogValue, sortedAmountLogs, 0, 100),
+          );
+          const studyHours = Math.round(
+            robustScale(amountLogValue, sortedAmountLogs, 0, 24),
+          );
+          const hourOfDay = ((hourValue % 24) + 24) % 24;
+          const attendance = Math.round(
+            clampNumber((hourOfDay / 24) * 100, 0, 100),
+          );
+          const assignments = Math.round(
+            robustScale(amountLogValue, sortedAmountLogs, 0, 10),
+          );
+          const sleep = Math.round(clampNumber(9 - score / 20, 4, 9));
+          const job = isFraud;
+          const grade = gradeFromScore(score);
+          const name = `${job ? "Fraud" : "Legit"} TX-${String(index + 1).padStart(5, "0")}`;
+
+          return {
+            name,
+            studyHours,
+            attendance,
+            midterm,
+            score,
+            assignments,
+            sleep,
+            job,
+            grade,
+          };
+        });
+      }
+
+      const TABLE_PAGE_SIZE = 50;
+      const tableState = {
+        page: 1,
+        filteredRows: [],
+      };
+
+      function formatCount(value) {
+        return Number(value || 0).toLocaleString("en-US");
+      }
+
+      function syncPagination(totalRows, pageRowsLength) {
+        const safeTotal = Math.max(0, totalRows);
+        const totalPages = Math.max(1, Math.ceil(safeTotal / TABLE_PAGE_SIZE));
+        tableState.page = Math.min(Math.max(tableState.page, 1), totalPages);
+
+        const start = safeTotal === 0 ? 0 : (tableState.page - 1) * TABLE_PAGE_SIZE + 1;
+        const end =
+          safeTotal === 0
+            ? 0
+            : Math.min((tableState.page - 1) * TABLE_PAGE_SIZE + pageRowsLength, safeTotal);
+
+        document.getElementById("rowCount").textContent =
+          `${formatCount(safeTotal)} records`;
+        document.getElementById("pageInfo").textContent =
+          safeTotal === 0
+            ? "Showing 0 of 0"
+            : `Showing ${formatCount(start)}-${formatCount(end)} of ${formatCount(safeTotal)}`;
+
+        document.getElementById("prevPageBtn").disabled = tableState.page <= 1;
+        document.getElementById("nextPageBtn").disabled =
+          tableState.page >= totalPages || safeTotal === 0;
+      }
+
+      function goToPage(direction) {
+        const totalRows = Array.isArray(tableState.filteredRows)
+          ? tableState.filteredRows.length
+          : 0;
+        const totalPages = Math.max(1, Math.ceil(totalRows / TABLE_PAGE_SIZE));
+        const nextPage = Math.min(
+          totalPages,
+          Math.max(1, tableState.page + direction),
+        );
+
+        if (nextPage === tableState.page) return;
+
+        tableState.page = nextPage;
+        renderTable(tableState.filteredRows);
+      }
+
       /* ═══════════════════════════════════════════════════════════════════
    ███████╗ ████████╗ ██╗   ██╗ ██████╗  ███████╗ ███╗  ██╗ ████████╗ ██╗
    ██╔════╝    ██╔══╝ ██║   ██║ ██╔══██╗ ██╔════╝ ████╗ ██║    ██╔══╝ ██║
@@ -1576,11 +1758,38 @@
        *  4. Update row count badge:           document.getElementById('rowCount').textContent = ...
        *  5. Signal readiness:                 onDataReady();
        */
-      function loadDataset() {
+      async function loadDataset() {
         window.DS = [...RAW_DATA];
+
+        try {
+          const response = await fetch(PROCESSED_POINTS_PATH, {
+            cache: "no-store",
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const payload = await response.json();
+          const mappedRows = mapProcessedPoints(payload.points);
+
+          if (mappedRows.length > 0) {
+            window.DS = mappedRows;
+          } else {
+            console.warn(
+              "Processed dataset loaded but contained no points. Using RAW_DATA fallback.",
+            );
+          }
+        } catch (error) {
+          console.warn(
+            "Could not load processed finals dataset; using RAW_DATA fallback.",
+            error,
+          );
+        }
+
+        tableState.filteredRows = [...window.DS];
+        tableState.page = 1;
         renderTable(window.DS);
         renderSummaryCards(window.DS);
-        document.getElementById("rowCount").textContent = `${window.DS.length} rows`;
         onDataReady();
       }
 
@@ -1607,13 +1816,22 @@
         const tbody = document.getElementById("tableBody");
         tbody.innerHTML = "";
 
-        if (!Array.isArray(data) || data.length === 0) {
+        tableState.filteredRows = Array.isArray(data) ? [...data] : [];
+
+        if (tableState.filteredRows.length === 0) {
           tbody.innerHTML =
-            '<tr><td colspan="10" style="text-align:center;padding:30px;">No results found.</td></tr>';
+            '<tr><td colspan="10" style="text-align:center;padding:30px;">No transaction records found.</td></tr>';
+          syncPagination(0, 0);
           return;
         }
 
-        data.forEach((student, index) => {
+        const startIndex = (tableState.page - 1) * TABLE_PAGE_SIZE;
+        const pageRows = tableState.filteredRows.slice(
+          startIndex,
+          startIndex + TABLE_PAGE_SIZE,
+        );
+
+        pageRows.forEach((student, index) => {
           const row = document.createElement("tr");
 
           const gradeClassMap = {
@@ -1625,7 +1843,7 @@
           const gradeClass = gradeClassMap[student.grade] || "";
 
           row.innerHTML = `
-            <td>${index + 1}</td>
+            <td>${startIndex + index + 1}</td>
             <td>${student.name}</td>
             <td class="num">${student.studyHours}</td>
             <td class="num">${student.attendance}</td>
@@ -1639,6 +1857,8 @@
 
           tbody.appendChild(row);
         });
+
+        syncPagination(tableState.filteredRows.length, pageRows.length);
       }
 
       /**
@@ -1683,9 +1903,9 @@
           result.sort((a, b) => a.grade.localeCompare(b.grade));
         }
 
+        tableState.page = 1;
         renderTable(result);
         renderSummaryCards(result);
-        document.getElementById("rowCount").textContent = `${result.length} rows`;
       }
 
       /**
@@ -1702,9 +1922,9 @@
       function resetTable() {
         document.getElementById("filterInput").value = "";
         document.getElementById("sortSelect").value = "";
+        tableState.page = 1;
         renderTable(window.DS);
         renderSummaryCards(window.DS);
-        document.getElementById("rowCount").textContent = `${window.DS.length} rows`;
       }
 
       /**
