@@ -412,6 +412,22 @@
         gap: 16px;
       }
 
+      .metrics-grid .panel:first-child {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .metrics-grid .panel:first-child .canvas-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: stretch;
+      }
+
+      .metrics-grid .panel:first-child canvas {
+        flex: 1;
+      }
+
       .matrix {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));

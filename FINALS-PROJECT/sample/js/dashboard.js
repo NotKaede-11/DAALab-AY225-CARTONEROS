@@ -799,8 +799,17 @@
 
         document.getElementById("rateList").innerHTML = entries
           .map(
-            ([label, value]) =>
-              `<li><b>${label}:</b> ${(value * 100).toFixed(3)}%</li>`,
+            ([label, value]) => {
+              const pct = (value * 100).toFixed(3);
+              return `<li>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <b>${label}</b><span>${pct}%</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: var(--line); border-radius: var(--radius-sm); overflow: hidden;">
+                  <div style="width: ${pct}%; height: 100%; background: var(--teal);"></div>
+                </div>
+              </li>`;
+            }
           )
           .join("");
       }
