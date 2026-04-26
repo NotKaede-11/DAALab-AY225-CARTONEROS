@@ -5,6 +5,7 @@
         "./processed/",
         "../processed/",
       ];
+      const MAX_SCATTER_LEGIT_POINTS = 24000;
       const state = {
         overview: null,
         distributions: null,
@@ -19,11 +20,24 @@
         featureTopN: 10,
         showLegit: true,
         showFraud: true,
+        scatterPreviewCount: 0,
+        browser: {
+          search: "",
+          classFilter: "all",
+          sort: "indexAsc",
+          pageSize: 50,
+          page: 1,
+          filteredCount: 0,
+        },
       };
 
       const charts = {};
 
       const numberFmt = new Intl.NumberFormat("en-US");
+      const moneyFmt = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
       const percentFmt = new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 3,
         maximumFractionDigits: 3,
@@ -226,6 +240,59 @@
             grid: { color: "rgba(87,101,96,0.18)" },
           },
         };
+      }
+
+      function formatTxId(index) {
+        return `TX-${String(index + 1).padStart(6, "0")}`;
+      }
+
+      function getAllPoints() {
+        return Array.isArray(state.samplePoints?.points)
+          ? state.samplePoints.points
+          : [];
+      }
+
+      function getFraudThreshold() {
+        return Number(state.metrics?.best_f1_threshold ?? 0);
+      }
+
+      function getAlertLabel(point) {
+        return Number(point.score_hint || 0) >= getFraudThreshold()
+          ? "Alert"
+          : "Below";
+      }
+
+      function getClassLabel(point) {
+        return point.class === 1 ? "Fraud" : "Legitimate";
+      }
+
+      function thinLegitimatePoints(points, maxPoints) {
+        if (points.length <= maxPoints) {
+          return points;
+        }
+
+        const stride = Math.ceil(points.length / maxPoints);
+        const preview = [];
+        for (let index = 0; index < points.length; index += stride) {
+          preview.push(points[index]);
+        }
+        return preview.slice(0, maxPoints);
+      }
+
+      function buildLoadedStatus() {
+        const points = getAllPoints();
+        const legitTotal = Number(
+          state.samplePoints?.metadata?.legit_sample_size ?? 0,
+        );
+        const fraudTotal = Number(
+          state.samplePoints?.metadata?.fraud_sample_size ?? 0,
+        );
+        const previewNote =
+          legitTotal > MAX_SCATTER_LEGIT_POINTS
+            ? ` Scatter preview shows all ${numberFmt.format(fraudTotal)} fraud points plus ${numberFmt.format(state.scatterPreviewCount)} legitimate points for responsiveness.`
+            : "";
+
+        return `Loaded ${numberFmt.format(points.length)} processed transactions successfully.${previewNote}`;
       }
 
       function filterDataset(legitValues, fraudValues) {
@@ -451,20 +518,34 @@
       function renderScatterChart() {
         destroyChart("scatterChart");
         const ctx = document.getElementById("scatterChart");
-        const points = state.samplePoints.points;
+        const points = getAllPoints();
 
-        const legit = points
-          .filter((p) => p.class === 0)
-          .map((p) => ({ x: p.time_hour, y: p.amount_log10 }));
-        const fraud = points
-          .filter((p) => p.class === 1)
+        const legit = [];
+        const fraudScatter = [];
+        for (const point of points) {
+          if (point.class === 1) {
+            fraudScatter.push({ x: point.time_hour, y: point.amount_log10 });
+          } else {
+            legit.push(point);
+          }
+        }
+        const legitPreview = thinLegitimatePoints(
+          legit,
+          MAX_SCATTER_LEGIT_POINTS,
+        );
+        state.scatterPreviewCount = legitPreview.length;
+
+        const legitScatter = legitPreview
           .map((p) => ({ x: p.time_hour, y: p.amount_log10 }));
 
         const datasets = [];
         if (state.showLegit) {
           datasets.push({
-            label: `Legitimate sample (${legit.length})`,
-            data: legit,
+            label:
+              legit.length > legitPreview.length
+                ? `Legitimate preview (${numberFmt.format(legitPreview.length)} of ${numberFmt.format(legit.length)})`
+                : `Legitimate (${numberFmt.format(legit.length)})`,
+            data: legitScatter,
             pointRadius: 2,
             pointHoverRadius: 3,
             borderWidth: 0,
@@ -473,8 +554,8 @@
         }
         if (state.showFraud) {
           datasets.push({
-            label: `Fraud (${fraud.length})`,
-            data: fraud,
+            label: `Fraud (${numberFmt.format(fraudScatter.length)})`,
+            data: fraudScatter,
             pointRadius: 4,
             pointHoverRadius: 5,
             borderWidth: 0,
@@ -508,6 +589,122 @@
             },
           },
         });
+      }
+
+      function renderRecordBrowser() {
+        const tbody = document.getElementById("recordTableBody");
+        const summary = document.getElementById("browserSummary");
+        const meta = document.getElementById("recordMeta");
+        const pageLabel = document.getElementById("recordPageLabel");
+        const prevButton = document.getElementById("recordPrev");
+        const nextButton = document.getElementById("recordNext");
+        const points = getAllPoints();
+
+        if (!tbody || !summary || !meta || !pageLabel || !prevButton || !nextButton) {
+          return;
+        }
+
+        if (points.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="7">No processed records loaded.</td></tr>';
+          summary.textContent = "No processed records available.";
+          meta.textContent = "Browser unavailable";
+          pageLabel.textContent = "Page 0 of 0";
+          prevButton.disabled = true;
+          nextButton.disabled = true;
+          return;
+        }
+
+        const search = state.browser.search.trim().toLowerCase();
+        let rows = points.map((_, index) => index);
+
+        if (state.browser.classFilter === "fraud") {
+          rows = rows.filter((index) => points[index].class === 1);
+        } else if (state.browser.classFilter === "legit") {
+          rows = rows.filter((index) => points[index].class === 0);
+        }
+
+        if (search) {
+          rows = rows.filter((index) => {
+            const point = points[index];
+            const txId = formatTxId(index).toLowerCase();
+            const classLabel = getClassLabel(point).toLowerCase();
+            const alertLabel = getAlertLabel(point).toLowerCase();
+            return (
+              txId.includes(search) ||
+              classLabel.includes(search) ||
+              alertLabel.includes(search)
+            );
+          });
+        }
+
+        switch (state.browser.sort) {
+          case "scoreDesc":
+            rows.sort((a, b) => points[b].score_hint - points[a].score_hint);
+            break;
+          case "scoreAsc":
+            rows.sort((a, b) => points[a].score_hint - points[b].score_hint);
+            break;
+          case "amountDesc":
+            rows.sort((a, b) => points[b].amount - points[a].amount);
+            break;
+          case "amountAsc":
+            rows.sort((a, b) => points[a].amount - points[b].amount);
+            break;
+          case "hourAsc":
+            rows.sort((a, b) => points[a].time_hour - points[b].time_hour);
+            break;
+          case "hourDesc":
+            rows.sort((a, b) => points[b].time_hour - points[a].time_hour);
+            break;
+          default:
+            rows.sort((a, b) => a - b);
+            break;
+        }
+
+        state.browser.filteredCount = rows.length;
+        const pageSize = Math.max(1, Number(state.browser.pageSize) || 50);
+        const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+        state.browser.page = clamp(state.browser.page, 1, totalPages);
+
+        const startIndex = (state.browser.page - 1) * pageSize;
+        const pageRows = rows.slice(startIndex, startIndex + pageSize);
+
+        tbody.innerHTML = pageRows.length
+          ? pageRows
+              .map((index) => {
+                const point = points[index];
+                const classLabel = getClassLabel(point);
+                const classClass =
+                  point.class === 1 ? "class-fraud" : "class-legit";
+                const alertLabel = getAlertLabel(point);
+                const alertClass =
+                  alertLabel === "Alert" ? "alert-yes" : "alert-no";
+
+                return `
+                  <tr>
+                    <td class="tx-id">${formatTxId(index)}</td>
+                    <td><span class="class-chip ${classClass}">${classLabel}</span></td>
+                    <td>${Number(point.time_hour).toFixed(2)}</td>
+                    <td>$${moneyFmt.format(Number(point.amount || 0))}</td>
+                    <td>${Number(point.amount_log10 || 0).toFixed(4)}</td>
+                    <td>${Number(point.score_hint || 0).toFixed(4)}</td>
+                    <td><span class="alert-chip ${alertClass}">${alertLabel}</span></td>
+                  </tr>
+                `;
+              })
+              .join("")
+          : '<tr><td colspan="7">No records match the current browser filters.</td></tr>';
+
+        const shownStart = rows.length === 0 ? 0 : startIndex + 1;
+        const shownEnd = Math.min(startIndex + pageRows.length, rows.length);
+        summary.textContent =
+          `Loaded ${numberFmt.format(points.length)} full processed transactions. Showing ${numberFmt.format(shownStart)}-${numberFmt.format(shownEnd)} of ${numberFmt.format(rows.length)} matching records.`;
+        meta.textContent =
+          `Best-F1 alert threshold: ${getFraudThreshold().toFixed(4)} | Fraud rows: ${numberFmt.format(Number(state.samplePoints?.metadata?.fraud_sample_size ?? state.overview?.fraud_transactions ?? 0))} | Legitimate rows: ${numberFmt.format(Number(state.samplePoints?.metadata?.legit_sample_size ?? state.overview?.legit_transactions ?? 0))}`;
+        pageLabel.textContent = `Page ${state.browser.page} of ${totalPages}`;
+        prevButton.disabled = state.browser.page <= 1;
+        nextButton.disabled = state.browser.page >= totalPages;
       }
 
       function renderPRChart() {
@@ -920,13 +1117,14 @@
         renderLiftChart();
         renderFeatureChart();
         renderThresholdSnapshot();
+        renderRecordBrowser();
         renderInsights();
-        setStatus("Loaded processed artifacts successfully.");
+        setStatus(buildLoadedStatus());
       }
 
       async function loadData(forceRefresh = false) {
         setStatus(
-          "Loading overview, distributions, sampled points, and metrics...",
+          "Loading overview, distributions, full processed points, and metrics...",
         );
         try {
           const cacheBust = forceRefresh ? Date.now() : Date.now();
@@ -992,6 +1190,80 @@
             state.showFraud = event.target.checked;
             renderAll();
           });
+
+        const recordSearch = document.getElementById("recordSearch");
+        if (recordSearch) {
+          recordSearch.addEventListener("input", (event) => {
+            state.browser.search = event.target.value;
+            state.browser.page = 1;
+            renderRecordBrowser();
+          });
+        }
+
+        const recordClassFilter = document.getElementById("recordClassFilter");
+        if (recordClassFilter) {
+          recordClassFilter.addEventListener("change", (event) => {
+            state.browser.classFilter = event.target.value;
+            state.browser.page = 1;
+            renderRecordBrowser();
+          });
+        }
+
+        const recordSort = document.getElementById("recordSort");
+        if (recordSort) {
+          recordSort.addEventListener("change", (event) => {
+            state.browser.sort = event.target.value;
+            state.browser.page = 1;
+            renderRecordBrowser();
+          });
+        }
+
+        const recordPageSize = document.getElementById("recordPageSize");
+        if (recordPageSize) {
+          recordPageSize.addEventListener("change", (event) => {
+            state.browser.pageSize = Number(event.target.value);
+            state.browser.page = 1;
+            renderRecordBrowser();
+          });
+        }
+
+        const recordReset = document.getElementById("recordReset");
+        if (recordReset) {
+          recordReset.addEventListener("click", () => {
+            state.browser.search = "";
+            state.browser.classFilter = "all";
+            state.browser.sort = "indexAsc";
+            state.browser.pageSize = 50;
+            state.browser.page = 1;
+
+            const searchInput = document.getElementById("recordSearch");
+            const classSelect = document.getElementById("recordClassFilter");
+            const sortSelect = document.getElementById("recordSort");
+            const pageSizeSelect = document.getElementById("recordPageSize");
+            if (searchInput) searchInput.value = "";
+            if (classSelect) classSelect.value = "all";
+            if (sortSelect) sortSelect.value = "indexAsc";
+            if (pageSizeSelect) pageSizeSelect.value = "50";
+
+            renderRecordBrowser();
+          });
+        }
+
+        const recordPrev = document.getElementById("recordPrev");
+        if (recordPrev) {
+          recordPrev.addEventListener("click", () => {
+            state.browser.page = Math.max(1, state.browser.page - 1);
+            renderRecordBrowser();
+          });
+        }
+
+        const recordNext = document.getElementById("recordNext");
+        if (recordNext) {
+          recordNext.addEventListener("click", () => {
+            state.browser.page += 1;
+            renderRecordBrowser();
+          });
+        }
 
         const featureSelect = document.getElementById("featureTopN");
         if (featureSelect) {

@@ -38,7 +38,7 @@
           </div>
           <div class="info-grid">
             <div><b>Dataset source:</b> creditcard.csv</div>
-            <div><b>Visual strategy:</b> aggregated bins + sampled points</div>
+            <div><b>Visual strategy:</b> aggregated bins + full processed transaction points</div>
             <div><b>Frontend stack:</b> HTML, CSS, JavaScript, Chart.js</div>
             <div><b>Data pipeline:</b> preprocess_creditcard.py</div>
           </div>
@@ -153,13 +153,13 @@
           <article
             class="panel help-container"
             style="--delay: 490ms"
-            data-help-title="Sampled Transaction Map"
-            data-help-text="Each point is a transaction with time-of-day and transformed amount. It represents where fraud records sit relative to legitimate records in the same feature space."
+            data-help-title="Transaction Map Preview"
+            data-help-text="The dashboard loads the full processed transaction file. To keep the browser responsive, this map may render all fraud points plus a deterministic preview of legitimate points."
           >
-            <h2>Sampled Transaction Map</h2>
+            <h2>Transaction Map Preview</h2>
             <p class="sub">
-              All fraud points + sampled legit points plotted by hour and log
-              amount.
+              Built from the full processed dataset. Legitimate points may be
+              thinned for rendering speed.
             </p>
             <div class="canvas-wrap"><canvas id="scatterChart"></canvas></div>
           </article>
@@ -275,6 +275,89 @@
             <div class="canvas-wrap"><canvas id="featureChart"></canvas></div>
           </article>
         </section>
+
+        <article
+          class="panel help-container"
+          style="--delay: 650ms"
+          data-help-title="Full Transaction Browser"
+          data-help-text="Browse the entire processed transaction file with pagination. Filters and sorting run against the loaded full dataset rather than a reduced table sample."
+        >
+          <div class="title-row">
+            <h2>Full Transaction Browser</h2>
+          </div>
+          <p class="sub" id="browserSummary">
+            Loading full processed transaction records...
+          </p>
+          <div class="browser-toolbar">
+            <label class="browser-control">
+              <span>Search</span>
+              <input
+                type="text"
+                id="recordSearch"
+                placeholder="TX id, class, or alert status"
+              />
+            </label>
+            <label class="browser-control">
+              <span>Class</span>
+              <select id="recordClassFilter">
+                <option value="all">All classes</option>
+                <option value="fraud">Fraud only</option>
+                <option value="legit">Legitimate only</option>
+              </select>
+            </label>
+            <label class="browser-control">
+              <span>Sort</span>
+              <select id="recordSort">
+                <option value="indexAsc">Original order</option>
+                <option value="scoreDesc">Score hint ↓</option>
+                <option value="scoreAsc">Score hint ↑</option>
+                <option value="amountDesc">Amount ↓</option>
+                <option value="amountAsc">Amount ↑</option>
+                <option value="hourAsc">Hour ↑</option>
+                <option value="hourDesc">Hour ↓</option>
+              </select>
+            </label>
+            <label class="browser-control browser-control-sm">
+              <span>Rows</span>
+              <select id="recordPageSize">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+            <button type="button" class="toggle" id="recordReset">
+              Reset browser
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table class="record-table">
+              <thead>
+                <tr>
+                  <th>TX ID</th>
+                  <th>Class</th>
+                  <th>Hour</th>
+                  <th>Amount</th>
+                  <th>Log Amount</th>
+                  <th>Score Hint</th>
+                  <th>Alert @ Best F1</th>
+                </tr>
+              </thead>
+              <tbody id="recordTableBody">
+                <tr>
+                  <td colspan="7">Loading processed records...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="browser-footer">
+            <div class="browser-meta" id="recordMeta">Preparing browser...</div>
+            <div class="browser-pagination">
+              <button type="button" class="toggle" id="recordPrev">Previous</button>
+              <span id="recordPageLabel">Page -</span>
+              <button type="button" class="toggle" id="recordNext">Next</button>
+            </div>
+          </div>
+        </article>
 
         <article
           class="insights panel help-container"

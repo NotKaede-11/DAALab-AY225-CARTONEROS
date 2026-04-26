@@ -551,6 +551,149 @@
         padding: 5px 8px;
       }
 
+      .browser-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+        align-items: end;
+      }
+
+      .browser-control {
+        display: grid;
+        gap: 6px;
+        min-width: 160px;
+        flex: 1 1 180px;
+      }
+
+      .browser-control-sm {
+        flex: 0 0 90px;
+        min-width: 90px;
+      }
+
+      .browser-control span {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--ink-soft);
+        font-weight: 700;
+      }
+
+      .browser-control input,
+      .browser-control select {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: #fffdf8;
+        color: var(--ink);
+        font-size: 0.82rem;
+        padding: 9px 10px;
+      }
+
+      .browser-control input:focus,
+      .browser-control select:focus {
+        outline: none;
+        border-color: var(--teal);
+        box-shadow: 0 0 0 2px rgba(27, 122, 105, 0.14);
+      }
+
+      .table-wrap {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        overflow: auto;
+        background: #fffdf8;
+      }
+
+      .record-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+
+      .record-table th,
+      .record-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(217, 207, 190, 0.85);
+        text-align: left;
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+
+      .record-table th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f7f1e6;
+        color: var(--ink);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .record-table td {
+        color: var(--ink-soft);
+      }
+
+      .record-table tbody tr:hover {
+        background: rgba(27, 122, 105, 0.06);
+      }
+
+      .record-table .tx-id {
+        color: var(--ink);
+        font-weight: 700;
+      }
+
+      .record-table .class-chip,
+      .record-table .alert-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
+
+      .record-table .class-legit {
+        color: var(--teal);
+        background: rgba(27, 122, 105, 0.12);
+      }
+
+      .record-table .class-fraud {
+        color: var(--burnt);
+        background: rgba(217, 90, 44, 0.14);
+      }
+
+      .record-table .alert-yes {
+        color: var(--burnt);
+        background: rgba(217, 90, 44, 0.14);
+      }
+
+      .record-table .alert-no {
+        color: var(--ink-soft);
+        background: rgba(87, 101, 96, 0.1);
+      }
+
+      .browser-footer {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 12px;
+        align-items: center;
+      }
+
+      .browser-meta,
+      .browser-pagination {
+        font-size: 0.8rem;
+        color: var(--ink-soft);
+      }
+
+      .browser-pagination {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
       .insights {
         margin-top: 8px;
         background: linear-gradient(135deg, #1f2b2a 0%, #29413d 100%);
@@ -588,6 +731,11 @@
         .status {
           width: 100%;
           margin-left: 0;
+        }
+
+        .browser-footer {
+          flex-direction: column;
+          align-items: flex-start;
         }
       }
 
