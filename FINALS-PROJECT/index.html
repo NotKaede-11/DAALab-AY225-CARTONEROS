@@ -295,6 +295,11 @@
 
     <script>
       window.DASHBOARD_DATA_ROOTS = ["./processed/"];
+      if (window.location.protocol === "file:") {
+        document.write(
+          '<script src="./processed/embedded_bundle.js"><\\/script>',
+        );
+      }
     </script>
     <script src="./sample/js/dashboard.js"></script>
   </body>

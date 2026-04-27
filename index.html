@@ -1581,8 +1581,37 @@
           : s[m];
       }
 
-      const PROCESSED_POINTS_PATH =
-        "FINALS-PROJECT/processed/sample_points.json";
+      const PROCESSED_POINTS_PATHS = [
+        "FINALS-PROJECT/processed/sample_points.json",
+        "./FINALS-PROJECT/processed/sample_points.json",
+        "processed/sample_points.json",
+        "./processed/sample_points.json",
+        "../FINALS-PROJECT/processed/sample_points.json",
+      ];
+
+      async function fetchProcessedDataset() {
+        if (window.location.protocol === "file:") {
+          return null;
+        }
+
+        for (const candidate of PROCESSED_POINTS_PATHS) {
+          try {
+            const response = await fetch(candidate, { cache: "no-store" });
+            if (!response.ok) {
+              continue;
+            }
+
+            const payload = await response.json();
+            if (payload && Array.isArray(payload.points)) {
+              return payload;
+            }
+          } catch {
+            // Try the next candidate path.
+          }
+        }
+
+        return null;
+      }
 
       function clampNumber(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -1700,11 +1729,15 @@
         const totalPages = Math.max(1, Math.ceil(safeTotal / TABLE_PAGE_SIZE));
         tableState.page = Math.min(Math.max(tableState.page, 1), totalPages);
 
-        const start = safeTotal === 0 ? 0 : (tableState.page - 1) * TABLE_PAGE_SIZE + 1;
+        const start =
+          safeTotal === 0 ? 0 : (tableState.page - 1) * TABLE_PAGE_SIZE + 1;
         const end =
           safeTotal === 0
             ? 0
-            : Math.min((tableState.page - 1) * TABLE_PAGE_SIZE + pageRowsLength, safeTotal);
+            : Math.min(
+                (tableState.page - 1) * TABLE_PAGE_SIZE + pageRowsLength,
+                safeTotal,
+              );
 
         document.getElementById("rowCount").textContent =
           `${formatCount(safeTotal)} records`;
@@ -1762,14 +1795,14 @@
         window.DS = [...RAW_DATA];
 
         try {
-          const response = await fetch(PROCESSED_POINTS_PATH, {
-            cache: "no-store",
-          });
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+          const payload = await fetchProcessedDataset();
+
+          if (!payload) {
+            throw new Error(
+              "Processed dataset unavailable from current origin",
+            );
           }
 
-          const payload = await response.json();
           const mappedRows = mapProcessedPoints(payload.points);
 
           if (mappedRows.length > 0) {
@@ -1780,10 +1813,12 @@
             );
           }
         } catch (error) {
-          console.warn(
-            "Could not load processed finals dataset; using RAW_DATA fallback.",
-            error,
-          );
+          if (window.location.protocol !== "file:") {
+            console.warn(
+              "Could not load processed finals dataset; using RAW_DATA fallback.",
+              error,
+            );
+          }
         }
 
         tableState.filteredRows = [...window.DS];

@@ -37,6 +37,68 @@
         return Math.min(max, Math.max(min, value));
       }
 
+      function isFileMode() {
+        return window.location.protocol === "file:";
+      }
+
+      function getEmbeddedBundle() {
+        const bundle = window.DASHBOARD_EMBEDDED_BUNDLE;
+        if (!bundle || typeof bundle !== "object") {
+          return null;
+        }
+
+        const { overview, distributions, samplePoints, metrics } = bundle;
+        if (!overview || !distributions || !samplePoints || !metrics) {
+          return null;
+        }
+
+        return {
+          overview,
+          distributions,
+          samplePoints,
+          metrics,
+          dataRoot: "embedded_bundle.js",
+        };
+      }
+
+      function applyLoadedBundle(loaded) {
+        const { overview, distributions, samplePoints, metrics, dataRoot } =
+          loaded;
+
+        state.overview = overview;
+        state.distributions = distributions;
+        state.samplePoints = samplePoints;
+        state.metrics = metrics;
+        state.activeDataRoot = dataRoot;
+
+        state.liftDeciles = Array.isArray(metrics?.lift?.deciles)
+          ? metrics.lift.deciles
+          : [];
+        state.thresholdProfile = Array.isArray(metrics?.threshold_profile?.points)
+          ? metrics.threshold_profile.points
+          : [];
+        state.recommendedThresholdIndex = clamp(
+          Number(metrics?.threshold_profile?.recommended_index ?? 0),
+          0,
+          Math.max(0, state.thresholdProfile.length - 1),
+        );
+        state.selectedThresholdIndex = state.recommendedThresholdIndex;
+
+        state.featureGapAll = Array.isArray(distributions?.feature_gap_all)
+          ? distributions.feature_gap_all
+          : Array.isArray(distributions?.feature_gap_top10)
+            ? distributions.feature_gap_top10
+            : [];
+        state.featureTopN = Math.min(
+          10,
+          Math.max(1, state.featureGapAll.length || 1),
+        );
+
+        populateFeatureOptions();
+        initThresholdSimulator();
+        renderAll();
+      }
+
       function setStatus(text, isError = false) {
         const el = document.getElementById("loadStatus");
         el.textContent = text;
@@ -938,50 +1000,29 @@
       }
 
       async function loadData(forceRefresh = false) {
+        if (isFileMode()) {
+          const embedded = getEmbeddedBundle();
+          if (!embedded) {
+            setDataStamp("Data version: unavailable in file-open mode");
+            setStatus(
+              "Missing embedded bundle. Ensure FINALS-PROJECT/processed/embedded_bundle.js exists, then reopen this page.",
+              true,
+            );
+            return;
+          }
+
+          applyLoadedBundle(embedded);
+          setStatus("Loaded embedded processed artifacts (file-open mode).");
+          return;
+        }
+
         setStatus(
           "Loading overview, distributions, sampled points, and metrics...",
         );
         try {
           const cacheBust = forceRefresh ? Date.now() : Date.now();
           const loaded = await tryLoadBundle(cacheBust);
-
-          const { overview, distributions, samplePoints, metrics, dataRoot } =
-            loaded;
-
-          state.overview = overview;
-          state.distributions = distributions;
-          state.samplePoints = samplePoints;
-          state.metrics = metrics;
-          state.activeDataRoot = dataRoot;
-
-          state.liftDeciles = Array.isArray(metrics?.lift?.deciles)
-            ? metrics.lift.deciles
-            : [];
-          state.thresholdProfile = Array.isArray(
-            metrics?.threshold_profile?.points,
-          )
-            ? metrics.threshold_profile.points
-            : [];
-          state.recommendedThresholdIndex = clamp(
-            Number(metrics?.threshold_profile?.recommended_index ?? 0),
-            0,
-            Math.max(0, state.thresholdProfile.length - 1),
-          );
-          state.selectedThresholdIndex = state.recommendedThresholdIndex;
-
-          state.featureGapAll = Array.isArray(distributions?.feature_gap_all)
-            ? distributions.feature_gap_all
-            : Array.isArray(distributions?.feature_gap_top10)
-              ? distributions.feature_gap_top10
-              : [];
-          state.featureTopN = Math.min(
-            10,
-            Math.max(1, state.featureGapAll.length || 1),
-          );
-
-          populateFeatureOptions();
-          initThresholdSimulator();
-          renderAll();
+          applyLoadedBundle(loaded);
         } catch (error) {
           console.error(error);
           setDataStamp("Data version: unavailable");
