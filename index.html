@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
     <title>Fraud Risk Analysis · 2-Student Git Activity</title>
 
     <!--
@@ -638,8 +639,10 @@
         font-family: var(--mono);
       }
       .kv-list li {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: 14px;
+        align-items: start;
         padding: 7px 0;
         border-bottom: 1px solid var(--border);
       }
@@ -652,6 +655,20 @@
       .kv-list .v {
         color: var(--sage);
         font-weight: 600;
+        text-align: right;
+        line-height: 1.35;
+        padding-left: 6px;
+      }
+
+      .kv-list li.reg-equation-row {
+        grid-template-columns: 72px minmax(0, 1fr);
+      }
+
+      .kv-list li.reg-equation-row .v {
+        text-align: right;
+        justify-self: end;
+        padding-left: 8px;
+        font-size: 0.72rem;
       }
 
       /* ── INSIGHTS PANEL ──────────────────────────── */
@@ -1218,7 +1235,7 @@
           <div class="analysis-tile">
             <h4>Linear Regression</h4>
             <ul class="kv-list">
-              <li>
+              <li class="reg-equation-row">
                 <span class="k">Equation</span>
                 <span class="v" id="regEquation">—</span>
               </li>
@@ -1581,20 +1598,32 @@
           : s[m];
       }
 
-      const PROCESSED_POINTS_PATHS = [
-        "FINALS-PROJECT/processed/sample_points.json",
-        "./FINALS-PROJECT/processed/sample_points.json",
-        "processed/sample_points.json",
-        "./processed/sample_points.json",
-        "../FINALS-PROJECT/processed/sample_points.json",
-      ];
+      function getProcessedPointsPaths() {
+        const pathname = String(window.location.pathname || "").toLowerCase();
+        const inFinalsProjectDir = pathname.includes("/finals-project/");
+
+        const candidates = inFinalsProjectDir
+          ? [
+              "processed/sample_points.json",
+              "./processed/sample_points.json",
+              "../FINALS-PROJECT/processed/sample_points.json",
+            ]
+          : [
+              "FINALS-PROJECT/processed/sample_points.json",
+              "./FINALS-PROJECT/processed/sample_points.json",
+              "processed/sample_points.json",
+              "./processed/sample_points.json",
+            ];
+
+        return [...new Set(candidates)];
+      }
 
       async function fetchProcessedDataset() {
         if (window.location.protocol === "file:") {
           return null;
         }
 
-        for (const candidate of PROCESSED_POINTS_PATHS) {
+        for (const candidate of getProcessedPointsPaths()) {
           try {
             const response = await fetch(candidate, { cache: "no-store" });
             if (!response.ok) {
@@ -1678,10 +1707,15 @@
           const hourValue = safeNumber(point.time_hour, 0);
           const isFraud = safeNumber(point.class, 0) === 1;
 
-          const baseScore = Math.round(
-            robustScale(scoreHintValue, sortedScoreHints, 0, 100),
+          // Use a narrower mapped range so the distribution is less saturated at 0/100.
+          const baseScore = robustScale(scoreHintValue, sortedScoreHints, 8, 92);
+          const fraudBoost = isFraud ? 6 : 0;
+          const amountAdjustment = robustScale(amountLogValue, sortedAmountLogs, -3, 3);
+          const score = clampNumber(
+            Math.round(baseScore + fraudBoost + amountAdjustment),
+            1,
+            99,
           );
-          const score = clampNumber(baseScore + (isFraud ? 8 : 0), 0, 100);
           const midterm = Math.round(
             robustScale(amountLogValue, sortedAmountLogs, 0, 100),
           );
@@ -1692,6 +1726,9 @@
           const attendance = Math.round(
             clampNumber((hourOfDay / 24) * 100, 0, 100),
           );
+          const amountIndex = studyHours;
+          const timeOfDay = attendance;
+          const riskScore = score;
           const assignments = Math.round(
             robustScale(amountLogValue, sortedAmountLogs, 0, 10),
           );
@@ -1706,6 +1743,9 @@
             attendance,
             midterm,
             score,
+            amountIndex,
+            timeOfDay,
+            riskScore,
             assignments,
             sleep,
             job,
@@ -1793,6 +1833,9 @@
        */
       async function loadDataset() {
         window.DS = [...RAW_DATA];
+        window.DS_META = {
+          totalTransactions: window.DS.length,
+        };
 
         try {
           const payload = await fetchProcessedDataset();
@@ -1804,6 +1847,16 @@
           }
 
           const mappedRows = mapProcessedPoints(payload.points);
+          const metadata = payload && payload.metadata ? payload.metadata : {};
+          const legitSize = Number(metadata.legit_sample_size);
+          const fraudSize = Number(metadata.fraud_sample_size);
+          const inferredTotal =
+            Number.isFinite(legitSize) && Number.isFinite(fraudSize)
+              ? legitSize + fraudSize
+              : mappedRows.length;
+          window.DS_META = {
+            totalTransactions: inferredTotal,
+          };
 
           if (mappedRows.length > 0) {
             window.DS = mappedRows;
@@ -1819,6 +1872,9 @@
               error,
             );
           }
+          window.DS_META = {
+            totalTransactions: window.DS.length,
+          };
         }
 
         tableState.filteredRows = [...window.DS];
@@ -2536,9 +2592,10 @@
        */
       function renderAnalysis(data) {
         if (!data || data.length === 0) return;
-        const scores = data.map(d => d.score);
-        const hours  = data.map(d => d.studyHours);
-        const attend = data.map(d => d.attendance);
+        const scores = data.map((d) => Number(d.riskScore ?? d.score));
+        const amountIndices = data.map((d) => Number(d.amountIndex ?? d.studyHours));
+        const timeOfDay = data.map((d) => Number(d.timeOfDay ?? d.attendance));
+        const totalN = Number(window.DS_META?.totalTransactions);
 
         const correlationInterpretation = (r) => {
           const magnitude = Math.abs(r);
@@ -2554,25 +2611,31 @@
         };
 
         // Descriptive
-        document.getElementById('an').innerText = data.length;
-        const minS = Math.min(...scores);
-        const maxS = Math.max(...scores);
-        document.getElementById('aMin').innerText = minS;
-        document.getElementById('aMax').innerText = maxS;
-        document.getElementById('aRange').innerText = maxS - minS;
+        document.getElementById('an').innerText = Number.isFinite(totalN)
+          ? totalN.toLocaleString("en-US")
+          : data.length.toLocaleString("en-US");
+        let minS = Number.POSITIVE_INFINITY;
+        let maxS = Number.NEGATIVE_INFINITY;
+        for (const score of scores) {
+          if (score < minS) minS = score;
+          if (score > maxS) maxS = score;
+        }
+        document.getElementById('aMin').innerText = minS.toFixed(2);
+        document.getElementById('aMax').innerText = maxS.toFixed(2);
+        document.getElementById('aRange').innerText = (maxS - minS).toFixed(2);
         document.getElementById('aVariance').innerText = variance(scores).toFixed(2);
         document.getElementById('aStdDev').innerText = stdDev(scores).toFixed(2);
 
         // Correlation
-        const r1 = pearsonCorr(hours, scores);
+        const r1 = pearsonCorr(amountIndices, scores);
         document.getElementById('rPearson').innerText = r1.toFixed(4);
         document.getElementById('rInterp').innerText = correlationInterpretation(r1);
 
-        const r2 = pearsonCorr(attend, scores);
+        const r2 = pearsonCorr(timeOfDay, scores);
         document.getElementById('rPearson2').innerText = r2.toFixed(4);
         document.getElementById('rInterp2').innerText = correlationInterpretation(r2);
 
-        document.getElementById('rStronger').innerText = Math.abs(r1) >= Math.abs(r2) ? "Study Hours" : "Attendance";
+        document.getElementById('rStronger').innerText = Math.abs(r1) >= Math.abs(r2) ? "Amount Index" : "Time of Day";
         
         let directionStr = "Mixed";
         if (r1 > 0 && r2 > 0) directionStr = "Both positive";
@@ -2580,8 +2643,8 @@
         document.getElementById('rDirection').innerText = directionStr;
 
         // Regression
-        const reg = linearRegression(hours, scores);
-        document.getElementById('regEquation').innerText = `score = ${reg.slope.toFixed(4)}·hours + ${reg.intercept.toFixed(4)}`;
+        const reg = linearRegression(amountIndices, scores);
+        document.getElementById('regEquation').innerHTML = `riskScore = ${reg.slope.toFixed(4)} · amountIndex<br>+ ${reg.intercept.toFixed(4)}`;
         document.getElementById('regSlope').innerText = reg.slope.toFixed(4);
         document.getElementById('regIntercept').innerText = reg.intercept.toFixed(4);
         document.getElementById('regR2').innerText = reg.rSquared.toFixed(4);
@@ -2614,31 +2677,26 @@
        */
       function renderInsights(data) {
         if (!data || data.length === 0) return;
-        const scores = data.map(d => d.score);
-        const hours  = data.map(d => d.studyHours);
-        const attend = data.map(d => d.attendance);
+        const scores = data.map((d) => Number(d.riskScore ?? d.score));
+        const amountIndices = data.map((d) => Number(d.amountIndex ?? d.studyHours));
+        const timeOfDay = data.map((d) => Number(d.timeOfDay ?? d.attendance));
 
-        const meanScore = mean(scores).toFixed(1);
-        const r1 = pearsonCorr(hours, scores);
-        const r2 = pearsonCorr(attend, scores);
-        const strongestName = Math.abs(r1) > Math.abs(r2) ? "Study Hours" : "Attendance";
+        const meanScore = mean(scores).toFixed(2);
+        const r1 = pearsonCorr(amountIndices, scores);
+        const r2 = pearsonCorr(timeOfDay, scores);
+        const strongestName = Math.abs(r1) > Math.abs(r2) ? "Amount Index" : "Time of Day";
         const strongestVal = Math.abs(r1) > Math.abs(r2) ? r1 : r2;
         const strengthStr = Math.abs(strongestVal) >= 0.7 ? "Strong" : Math.abs(strongestVal) >= 0.4 ? "Moderate" : "Weak";
         const dirStr = strongestVal > 0 ? "Positive" : "Negative";
         const strongestInterpretation = `${strengthStr} ${dirStr} Correlation`;
         
-        const reg = linearRegression(hours, scores);
+        const reg = linearRegression(amountIndices, scores);
         const predicted = (reg.slope * 15 + reg.intercept).toFixed(1);
-
-        const passCount = data.filter(d => d.score >= 60).length;
-        const passRate = ((passCount / data.length) * 100).toFixed(1);
-
-        const ptJobs = data.filter(d => d.job);
-        const noJobs = data.filter(d => !d.job);
-        const ptJobMean = ptJobs.length > 0 ? mean(ptJobs.map(d => d.score)).toFixed(1) : 'N/A';
-        const noJobMean = noJobs.length > 0 ? mean(noJobs.map(d => d.score)).toFixed(1) : 'N/A';
-
-        const narrative = `The cohort achieved a mean final score of <span class="highlight">${meanScore}</span>. <span class="highlight">${strongestName}</span> showed the strongest relationship with performance, classified as <span class="highlight">${strongestInterpretation}</span>. Based on the regression model, a student studying 15 hours is predicted to score <span class="highlight">${predicted}</span>. Overall, <span class="highlight">${passRate}%</span> of students passed, and students with part-time jobs averaged <span class="highlight">${ptJobMean}</span> versus <span class="highlight">${noJobMean}</span> for those without jobs.`;
+        const totalN = Number(window.DS_META?.totalTransactions);
+        const renderedN = Number.isFinite(totalN)
+          ? totalN.toLocaleString("en-US")
+          : data.length.toLocaleString("en-US");
+        const narrative = `Across <span class="highlight">${renderedN}</span> transactions, the mean risk score is <span class="highlight">${meanScore}</span>. The stronger linear relationship with risk is <span class="highlight">${strongestName}</span>, interpreted as <span class="highlight">${strongestInterpretation}</span>. The fitted model reports <span class="highlight">R² = ${reg.rSquared.toFixed(4)}</span>, indicating how much risk variation is explained by amount index alone. Evaluating the regression at <span class="highlight">amountIndex = 15</span> gives a predicted risk score of <span class="highlight">${predicted}</span>.`;
 
         document.getElementById('insightsBody').innerHTML = `<p class="insight-text">${narrative}</p>`;
       }
