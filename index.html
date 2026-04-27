@@ -1543,9 +1543,9 @@
        */
       function onDataReady() {
         // Student 2: call your initializers here
-        // initCharts();       // ← Student 2 charts
-        // renderAnalysis(window.DS); // ← Student 2 stats
-        // renderInsights(window.DS); // ← Student 2 narrative
+        initCharts();       // ← Student 2 charts
+        renderAnalysis(window.DS); // ← Student 2 stats
+        renderInsights(window.DS); // ← Student 2 narrative
 
         console.log(
           "✅ onDataReady() fired — window.DS:",
@@ -2041,11 +2041,28 @@
        *   initCharts();
        */
       function initCharts() {
-        // ↓ TODO: Implement this function ↓
-        // drawBarChart('barChart', window.DS);
-        // drawScatterPlot('scatterChart', window.DS);
-        // drawDoughnut('doughnutChart', window.DS);
-        console.warn("⚠ Student 2: initCharts() is not implemented yet.");
+        const liveData =
+          Array.isArray(tableState?.filteredRows) && tableState.filteredRows.length
+            ? tableState.filteredRows
+            : window.DS;
+
+        try {
+          drawBarChart('barChart', liveData);
+        } catch (err) {
+          console.error('Student 2: drawBarChart failed', err);
+        }
+
+        try {
+          drawScatterPlot('scatterChart', liveData);
+        } catch (err) {
+          console.error('Student 2: drawScatterPlot failed', err);
+        }
+
+        try {
+          drawDoughnut('doughnutChart', liveData);
+        } catch (err) {
+          console.error('Student 2: drawDoughnut failed', err);
+        }
       }
 
       /**
@@ -2070,8 +2087,51 @@
        *       document.getElementById(canvasId).style.display = 'block';
        */
       function drawBarChart(canvasId, data) {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 2: drawBarChart() is not implemented yet.");
+        if (!data || data.length === 0) return;
+
+        const top = [...data].sort((a, b) => b.score - a.score).slice(0, 10);
+
+        window.CHARTS = window.CHARTS || {};
+        if (window.CHARTS[canvasId]) {
+          window.CHARTS[canvasId].destroy();
+        }
+
+        document.getElementById('barPlaceholder').style.display = 'none';
+        document.getElementById(canvasId).style.display = 'block';
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        window.CHARTS[canvasId] = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: top.map((d) => d.name),
+            datasets: [
+              {
+                label: 'Final Score',
+                data: top.map((d) => d.score),
+                backgroundColor: 'rgba(217,79,61,0.82)',
+                borderColor: 'rgba(217,79,61,1)',
+                borderWidth: 1.5,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            ...chartTheme(),
+            indexAxis: 'y',
+            plugins: {
+              ...(chartTheme().plugins || {}),
+              legend: { display: false },
+            },
+            scales: {
+              ...(chartTheme().scales || {}),
+              x: {
+                ...(chartTheme().scales?.x || {}),
+                min: 0,
+                max: 100,
+              },
+            },
+          },
+        });
       }
 
       /**
@@ -2098,8 +2158,94 @@
        *  7. Hide placeholder, show canvas
        */
       function drawScatterPlot(canvasId, data) {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 2: drawScatterPlot() is not implemented yet.");
+        if (!Array.isArray(data) || data.length === 0) return;
+        const rows = data.filter(
+          (d) => Number.isFinite(Number(d.attendance)) && Number.isFinite(Number(d.score)),
+        );
+        if (rows.length === 0) return;
+
+        // Keep charts readable on large datasets while still using Student 1's live data.
+        const maxPoints = 700;
+        const step = Math.max(1, Math.ceil(rows.length / maxPoints));
+        const sampledRows = rows.filter((_, i) => i % step === 0);
+        const points = sampledRows.map((d) => ({ x: Number(d.attendance), y: Number(d.score) }));
+        
+        window.CHARTS = window.CHARTS || {};
+        if (window.CHARTS[canvasId]) {
+          window.CHARTS[canvasId].destroy();
+        }
+
+        const xVals = rows.map((d) => Number(d.attendance));
+        const yVals = rows.map((d) => Number(d.score));
+        const reg = linearRegression(xVals, yVals);
+
+        const lx1 = 55;
+        const lx2 = 100;
+
+        const linePoints = [
+          { x: lx1, y: (reg.slope || 0) * lx1 + (reg.intercept || 0) },
+          { x: lx2, y: (reg.slope || 0) * lx2 + (reg.intercept || 0) }
+        ];
+
+        document.getElementById('scatterPlaceholder').style.display = 'none';
+        document.getElementById(canvasId).style.display = 'block';
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        window.CHARTS[canvasId] = new Chart(ctx, {
+          type: 'scatter',
+          data: {
+            datasets: [
+              {
+                label: 'Students',
+                data: points,
+                backgroundColor: 'rgba(58,125,92,0.45)',
+                pointRadius: 2,
+                pointHoverRadius: 4
+              },
+              {
+                label: 'Regression Line',
+                data: linePoints,
+                type: 'line',
+                borderColor: '#d94f3d',
+                borderDash: [5, 5],
+                pointRadius: 0,
+                tension: 0,
+                fill: false
+              }
+            ]
+          },
+          options: {
+            ...chartTheme(),
+            plugins: {
+              ...(chartTheme().plugins || {}),
+              tooltip: {
+                ...(chartTheme().plugins?.tooltip || {}),
+                callbacks: {
+                  label: (context) => {
+                    if (context.datasetIndex === 1) return `Regression: ${context.parsed.y.toFixed(1)}`;
+                    const row = sampledRows[context.dataIndex];
+                    return row ? `${row.name}: ${context.parsed.y}` : `${context.parsed.y}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              ...(chartTheme().scales || {}),
+              x: {
+                ...(chartTheme().scales?.x || {}),
+                min: 0,
+                max: 100,
+                title: { display: true, text: 'Time-of-Day %' },
+              },
+              y: {
+                ...(chartTheme().scales?.y || {}),
+                min: 0,
+                max: 100,
+                title: { display: true, text: 'Risk Score' },
+              },
+            },
+          }
+        });
       }
 
       /**
@@ -2127,8 +2273,53 @@
        *  8. Hide placeholder, show canvas
        */
       function drawDoughnut(canvasId, data) {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 2: drawDoughnut() is not implemented yet.");
+        if (!Array.isArray(data) || data.length === 0) return;
+        const counts = { A: 0, B: 0, C: 0, D: 0 };
+        data.forEach((d) => {
+          const grade = String(d.grade || '').toUpperCase();
+          if (counts[grade] !== undefined) counts[grade]++;
+        });
+        
+        window.CHARTS = window.CHARTS || {};
+        if (window.CHARTS[canvasId]) {
+          window.CHARTS[canvasId].destroy();
+        }
+
+        document.getElementById('doughnutPlaceholder').style.display = 'none';
+        document.getElementById(canvasId).style.display = 'block';
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        window.CHARTS[canvasId] = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['A', 'B', 'C', 'D'],
+            datasets: [{
+              data: [counts.A, counts.B, counts.C, counts.D],
+              backgroundColor: ['#2a7a50', '#3a6ea8', '#b5820d', '#d94f3d']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '60%',
+            plugins: {
+              ...(chartTheme().plugins || {}),
+              legend: {
+                ...(chartTheme().plugins?.legend || {}),
+                position: 'top',
+              },
+              tooltip: {
+                ...(chartTheme().plugins?.tooltip || {}),
+                callbacks: {
+                  label: (ctx) => {
+                    const pct = ((ctx.parsed / data.length) * 100).toFixed(1);
+                    return ` Grade ${ctx.label}: ${ctx.parsed} students (${pct}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
       }
 
       /**
@@ -2200,8 +2391,10 @@
        *   variance([2, 4, 4, 4, 5, 5, 7, 9]) → 4.00
        */
       function variance(arr) {
-        // ↓ TODO: Implement this function ↓
-        throw new Error("Student 2: variance() not implemented yet");
+        if (!arr || arr.length === 0) return 0;
+        const m = mean(arr);
+        const sumSq = arr.reduce((acc, val) => acc + Math.pow(val - m, 2), 0);
+        return Math.round((sumSq / arr.length) * 100) / 100;
       }
 
       /**
@@ -2215,8 +2408,8 @@
        * ONE-LINER HINT: return Math.round(Math.sqrt(variance(arr)) * 100) / 100;
        */
       function stdDev(arr) {
-        // ↓ TODO: Implement this function ↓
-        throw new Error("Student 2: stdDev() not implemented yet");
+        if (!arr || arr.length === 0) return 0;
+        return Math.round(Math.sqrt(variance(arr)) * 100) / 100;
       }
 
       /**
@@ -2244,8 +2437,20 @@
        *   Full string: e.g. "Strong Positive Correlation"
        */
       function pearsonCorr(x, y) {
-        // ↓ TODO: Implement this function ↓
-        throw new Error("Student 2: pearsonCorr() not implemented yet");
+        if (!x || !y || x.length !== y.length || x.length <= 1) return 0;
+        const mx = mean(x);
+        const my = mean(y);
+        let num = 0, denomX = 0, denomY = 0;
+        for (let i = 0; i < x.length; i++) {
+          const dx = x[i] - mx;
+          const dy = y[i] - my;
+          num += dx * dy;
+          denomX += dx * dx;
+          denomY += dy * dy;
+        }
+        if (denomX === 0 || denomY === 0) return 0;
+        const r = num / Math.sqrt(denomX * denomY);
+        return Math.round(r * 10000) / 10000;
       }
 
       /**
@@ -2269,8 +2474,26 @@
        *   { slope: 2.1842, intercept: 44.6310, rSquared: 0.9321 }
        */
       function linearRegression(x, y) {
-        // ↓ TODO: Implement this function ↓
-        throw new Error("Student 2: linearRegression() not implemented yet");
+        if (!x || !y || x.length !== y.length || x.length <= 1) {
+          return { slope: 0, intercept: 0, rSquared: 0 };
+        }
+        const mx = mean(x);
+        const my = mean(y);
+        let num = 0, denom = 0;
+        for (let i = 0; i < x.length; i++) {
+          const dx = x[i] - mx;
+          num += dx * (y[i] - my);
+          denom += dx * dx;
+        }
+        const slope = denom === 0 ? 0 : num / denom;
+        const intercept = my - slope * mx;
+        const r = pearsonCorr(x, y);
+        const rSquared = r * r;
+        return {
+          slope: Math.round(slope * 10000) / 10000,
+          intercept: Math.round(intercept * 10000) / 10000,
+          rSquared: Math.round(rSquared * 10000) / 10000
+        };
       }
 
       /**
@@ -2312,8 +2535,58 @@
        *                  (predicted score for a student who studies 15 hrs/week)
        */
       function renderAnalysis(data) {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 2: renderAnalysis() is not implemented yet.");
+        if (!data || data.length === 0) return;
+        const scores = data.map(d => d.score);
+        const hours  = data.map(d => d.studyHours);
+        const attend = data.map(d => d.attendance);
+
+        const correlationInterpretation = (r) => {
+          const magnitude = Math.abs(r);
+          const strength = magnitude >= 0.7 ? "Strong" : magnitude >= 0.4 ? "Moderate" : "Weak";
+          const direction = r > 0 ? "Positive" : r < 0 ? "Negative" : "Neutral";
+          return `${strength} ${direction} Correlation`;
+        };
+
+        const regressionInterpretation = (rSquared) => {
+          if (rSquared >= 0.9) return "Excellent fit";
+          if (rSquared >= 0.7) return "Good fit";
+          return "Weak fit";
+        };
+
+        // Descriptive
+        document.getElementById('an').innerText = data.length;
+        const minS = Math.min(...scores);
+        const maxS = Math.max(...scores);
+        document.getElementById('aMin').innerText = minS;
+        document.getElementById('aMax').innerText = maxS;
+        document.getElementById('aRange').innerText = maxS - minS;
+        document.getElementById('aVariance').innerText = variance(scores).toFixed(2);
+        document.getElementById('aStdDev').innerText = stdDev(scores).toFixed(2);
+
+        // Correlation
+        const r1 = pearsonCorr(hours, scores);
+        document.getElementById('rPearson').innerText = r1.toFixed(4);
+        document.getElementById('rInterp').innerText = correlationInterpretation(r1);
+
+        const r2 = pearsonCorr(attend, scores);
+        document.getElementById('rPearson2').innerText = r2.toFixed(4);
+        document.getElementById('rInterp2').innerText = correlationInterpretation(r2);
+
+        document.getElementById('rStronger').innerText = Math.abs(r1) >= Math.abs(r2) ? "Study Hours" : "Attendance";
+        
+        let directionStr = "Mixed";
+        if (r1 > 0 && r2 > 0) directionStr = "Both positive";
+        else if (r1 < 0 && r2 < 0) directionStr = "Both negative";
+        document.getElementById('rDirection').innerText = directionStr;
+
+        // Regression
+        const reg = linearRegression(hours, scores);
+        document.getElementById('regEquation').innerText = `score = ${reg.slope.toFixed(4)}·hours + ${reg.intercept.toFixed(4)}`;
+        document.getElementById('regSlope').innerText = reg.slope.toFixed(4);
+        document.getElementById('regIntercept').innerText = reg.intercept.toFixed(4);
+        document.getElementById('regR2').innerText = reg.rSquared.toFixed(4);
+        document.getElementById('regInterp').innerText = regressionInterpretation(reg.rSquared);
+        document.getElementById('regPredict').innerText = (reg.slope * 15 + reg.intercept).toFixed(1);
       }
 
       /**
@@ -2340,8 +2613,34 @@
        *     `<p class="insight-text">${yourNarrativeString}</p>`;
        */
       function renderInsights(data) {
-        // ↓ TODO: Implement this function ↓
-        console.warn("⚠ Student 2: renderInsights() is not implemented yet.");
+        if (!data || data.length === 0) return;
+        const scores = data.map(d => d.score);
+        const hours  = data.map(d => d.studyHours);
+        const attend = data.map(d => d.attendance);
+
+        const meanScore = mean(scores).toFixed(1);
+        const r1 = pearsonCorr(hours, scores);
+        const r2 = pearsonCorr(attend, scores);
+        const strongestName = Math.abs(r1) > Math.abs(r2) ? "Study Hours" : "Attendance";
+        const strongestVal = Math.abs(r1) > Math.abs(r2) ? r1 : r2;
+        const strengthStr = Math.abs(strongestVal) >= 0.7 ? "Strong" : Math.abs(strongestVal) >= 0.4 ? "Moderate" : "Weak";
+        const dirStr = strongestVal > 0 ? "Positive" : "Negative";
+        const strongestInterpretation = `${strengthStr} ${dirStr} Correlation`;
+        
+        const reg = linearRegression(hours, scores);
+        const predicted = (reg.slope * 15 + reg.intercept).toFixed(1);
+
+        const passCount = data.filter(d => d.score >= 60).length;
+        const passRate = ((passCount / data.length) * 100).toFixed(1);
+
+        const ptJobs = data.filter(d => d.job);
+        const noJobs = data.filter(d => !d.job);
+        const ptJobMean = ptJobs.length > 0 ? mean(ptJobs.map(d => d.score)).toFixed(1) : 'N/A';
+        const noJobMean = noJobs.length > 0 ? mean(noJobs.map(d => d.score)).toFixed(1) : 'N/A';
+
+        const narrative = `The cohort achieved a mean final score of <span class="highlight">${meanScore}</span>. <span class="highlight">${strongestName}</span> showed the strongest relationship with performance, classified as <span class="highlight">${strongestInterpretation}</span>. Based on the regression model, a student studying 15 hours is predicted to score <span class="highlight">${predicted}</span>. Overall, <span class="highlight">${passRate}%</span> of students passed, and students with part-time jobs averaged <span class="highlight">${ptJobMean}</span> versus <span class="highlight">${noJobMean}</span> for those without jobs.`;
+
+        document.getElementById('insightsBody').innerHTML = `<p class="insight-text">${narrative}</p>`;
       }
 
       /* ─────────────────────────────────────────────────────────────────
