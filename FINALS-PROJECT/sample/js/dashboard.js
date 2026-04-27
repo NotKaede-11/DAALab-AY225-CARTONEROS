@@ -1,10 +1,14 @@
       "use strict";
 
-      const DATA_ROOT_CANDIDATES = [
-        "./FINALS-PROJECT/processed/",
-        "./processed/",
-        "../processed/",
-      ];
+      const DATA_ROOT_CANDIDATES =
+        Array.isArray(window.DASHBOARD_DATA_ROOTS) &&
+        window.DASHBOARD_DATA_ROOTS.length > 0
+          ? window.DASHBOARD_DATA_ROOTS
+          : [
+              "./FINALS-PROJECT/processed/",
+              "./processed/",
+              "../processed/",
+            ];
       const state = {
         overview: null,
         distributions: null,
