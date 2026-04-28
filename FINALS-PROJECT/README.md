@@ -1,80 +1,85 @@
-# FINALS PROJECT - Credit Card Fraud Visualization
+# FINALS PROJECT - Fraud Risk Analysis Dashboard
 
-This finals deliverable uses a two-step workflow:
+This folder contains the data pipeline and supporting assets for the fraud-risk dashboard used by the root-level `../index.html`.
 
-1. Preprocess the large CSV once with Python.
-2. Open a static frontend dashboard that loads compact JSON artifacts.
+The main app is served from the repository root, while `FINALS-PROJECT/` holds the source dataset, preprocessing script, processed JSON files, and extracted sample assets.
 
-## Files
+## What the Root Dashboard Does
 
-- `data/creditcard.csv` - raw dataset
-- `preprocess_creditcard.py` - preprocessing pipeline
-- `processed/*.json` - generated dashboard data
-- `../index.html` - final visualization page (served from repo root)
-- `sample/css/dashboard.css` - extracted dashboard styles
-- `sample/js/dashboard.js` - extracted dashboard logic
+The root `index.html` loads processed transaction points from `FINALS-PROJECT/processed/sample_points.json` and maps them into dashboard-friendly fields in the browser, including:
 
-## Generate Processed Data
+- `riskScore`
+- `amountIndex`
+- `timeOfDay`
 
-From `FINALS-PROJECT/` run:
+It then renders:
+
+- descriptive statistics such as min, max, range, variance, and standard deviation
+- correlation analysis for `amountIndex -> riskScore` and `timeOfDay -> riskScore`
+- a linear regression summary with equation, slope, intercept, `R^2`, and prediction at index `15`
+- a narrative insights panel based on the computed results
+
+## Folder Contents
+
+- `data/creditcard.csv` - raw source dataset
+- `data-new/` - additional dataset files kept alongside the main input set
+- `preprocess_creditcard.py` - preprocessing script for generating processed outputs
+- `processed/sample_points.json` - primary dataset consumed by the root dashboard
+- `processed/overview.json` - summary metadata
+- `processed/distributions.json` - distribution-oriented processed output
+- `processed/metrics.json` - metrics-oriented processed output
+- `processed/embedded_bundle.js` - generated supporting bundle
+- `index.html` - alternate dashboard file inside `FINALS-PROJECT`
+- `sample/css/dashboard.css` - extracted styling reference
+- `sample/js/dashboard.js` - extracted JavaScript reference
+
+## Generate the Processed Data
+
+From inside `FINALS-PROJECT/`, run:
 
 ```bash
 python preprocess_creditcard.py
 ```
 
-Optional arguments:
+Optional example:
 
 ```bash
 python preprocess_creditcard.py --max-legit-points 12000 --seed 42
 ```
 
-## Publish and View on GitHub Pages
+After preprocessing, make sure `processed/sample_points.json` exists because that is the key file used by the root dashboard.
 
-This project is static (HTML + JSON), so it can run directly on GitHub Pages with no backend and no localhost database server.
+## How the Root Page Finds the Data
 
-### 1. Make sure processed artifacts exist
+The root dashboard tries a few relative paths so it can work from different locations, but the intended repository layout is:
 
-From `FINALS-PROJECT/`:
+- root page: `../index.html`
+- processed data: `processed/sample_points.json`
 
-```bash
-python preprocess_creditcard.py
-```
+When the root page is opened from the repository root, it resolves the dataset from:
 
-Confirm these files are present and committed:
+- `FINALS-PROJECT/processed/sample_points.json`
 
-- `processed/overview.json`
-- `processed/distributions.json`
+When the in-folder `FINALS-PROJECT/index.html` is used, it can resolve:
+
 - `processed/sample_points.json`
-- `processed/metrics.json`
 
-### 2. Push to GitHub
+## GitHub Pages Notes
 
-Commit and push your repository so the latest `FINALS-PROJECT/processed/*.json` files are available online.
+This project is static, so it can run on GitHub Pages without a backend.
 
-### 3. Enable GitHub Pages
+For the hosted version to work correctly:
 
-In GitHub:
+- commit the root `index.html`
+- commit `FINALS-PROJECT/processed/sample_points.json`
+- keep folder names and file casing exactly the same
+- publish from the repository root
 
-- Open repository `Settings` -> `Pages`
-- Under `Build and deployment`, set `Source` to `Deploy from a branch`
-- Select branch `main` (or your active branch) and folder `/ (root)`
-- Save
+If the processed JSON is missing from GitHub, the live page will not be able to load the exact processed fraud dataset.
 
-### 4. Open the live dashboard URL
+## Local Preview
 
-Use the GitHub Pages URL pattern:
-
-- `https://<your-username>.github.io/<your-repo>/`
-
-The dashboard reads data from:
-
-- `../processed/*.json`
-
-which resolves correctly on GitHub Pages.
-
-## Local Preview (Optional)
-
-If you still want to preview before pushing, you can run:
+To preview with fetch requests working, serve the repository through a local web server instead of opening the HTML file directly:
 
 ```bash
 python -m http.server 8000
@@ -82,9 +87,16 @@ python -m http.server 8000
 
 Then open:
 
-- `http://localhost:8000/`
+```text
+http://localhost:8000/
+```
 
-## Notes
+## Summary
 
-- The metrics section uses a heuristic ranking score to produce a precision-recall curve and AUPRC-oriented interpretation.
-- This is for analysis and visualization, not a production fraud detector.
+Use the root `index.html` as the main dashboard entry point.
+
+Use this `FINALS-PROJECT/` folder for:
+
+- preparing the processed dataset
+- storing the JSON artifacts the dashboard reads
+- keeping supporting assets and references for the final project
